@@ -39,6 +39,10 @@ $config = yii\helpers\ArrayHelper::merge($main, [
             'showScriptName' => false,
             'baseUrl' => '/api',
             'rules' => [
+
+                'GET docs' => 'docs/index',
+                'GET docs/json-schema' => 'docs/json-schema',
+
                 // --- Простые действия с префиксом api ---
                 'GET hello' => 'api/site/hello',
 
@@ -71,6 +75,23 @@ $config = yii\helpers\ArrayHelper::merge($main, [
                     'pluralize' => false,
                     'extraPatterns' => [
                         'OPTIONS <action>' => 'options',
+                    ],
+                ],
+            ],
+        ],
+        'assetManager' => [
+            'basePath' => '@app/web/assets',
+            'baseUrl'  => '/api/web/assets',   // подстрой под свой nginx/apache
+            'bundles' => [
+                'yii2mod\swagger\SwaggerAsset' => [
+                    'sourcePath' => null,  // не публикуем локально
+                    'baseUrl'    => 'https://unpkg.com/swagger-ui-dist@3.52.5',
+                    'js' => [
+                        'swagger-ui-bundle.js',
+                        'swagger-ui-standalone-preset.js',
+                    ],
+                    'css' => [
+                        'swagger-ui.css',
                     ],
                 ],
             ],

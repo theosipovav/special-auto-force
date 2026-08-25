@@ -47,8 +47,23 @@ class AuthController extends Controller
     }
 
     /**
-     * POST /api/auth/login
-     * Авторизация пользователя (логин/пароль) и выдача JWT Bearer токена
+     * @SWG\Post(
+     *     path="/auth/login",
+     *     tags={"Auth"},
+     *     summary="Авторизация",
+     *     @SWG\Parameter(
+     *         name="body",
+     *         in="body",
+     *         required=true,
+     *         @SWG\Schema(
+     *             required={"email", "password"},
+     *             @SWG\Property(property="email", type="string"),
+     *             @SWG\Property(property="password", type="string")
+     *         )
+     *     ),
+     *     @SWG\Response(response=200, description="Успешный вход"),
+     *     @SWG\Response(response=401, description="Неверные данные")
+     * )
      */
     public function actionLogin()
     {
@@ -86,7 +101,6 @@ class AuthController extends Controller
         Yii::$app->response->statusCode = 200;
         $res = new SigninResponsDto($token, 'Bearer', $expiresIn, $user->toArray());
         return $res;
-
     }
 
 
