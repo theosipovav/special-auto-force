@@ -11,8 +11,9 @@ use yii\db\ActiveRecord;
  * @property int $id Id
  * @property string $title Название (Title)
  * @property string|null $description Описание (Description)
- * @property string|null $image Фото (Image) ссылка
+ * @property int|null $image_id ID изображения
  *
+ * @property ImageEntity|null $imageEntity
  * @property ProductCategory[] $productCategories
  * @property Product[] $products
  */
@@ -28,7 +29,9 @@ class Category extends ActiveRecord
         return [
             [['title'], 'required', 'message' => 'Поле "Название" обязательно для заполнения'],
             [['description'], 'string'],
-            [['title', 'image'], 'string', 'max' => 255],
+            [['title'], 'string', 'max' => 255],
+            [['image_id'], 'integer'],
+            [['image_id'], 'exist', 'skipOnError' => true, 'targetClass' => ImageEntity::class, 'targetAttribute' => ['image_id' => 'id']],
         ];
     }
 
@@ -38,7 +41,7 @@ class Category extends ActiveRecord
             'id' => 'Идентификатор записи',
             'title' => 'Название',
             'description' => 'Описание',
-            'image' => 'Фото',
+            'image_id' => 'Фото',
         ];
     }
 
@@ -48,7 +51,9 @@ class Category extends ActiveRecord
             'id',
             'title',
             'description',
-            'image',
+            'image' => function () {
+                return $this->imageEntity ? $this->imageEntity->url : null;
+            },
             'productsCount' => function () {
                 return (int) $this->getProducts()->count();
             },
@@ -58,9 +63,15 @@ class Category extends ActiveRecord
     public function extraFields()
     {
         return [
+            'imageEntity',
             'products',
             'productCategories',
         ];
+    }
+
+    public function getImageEntity()
+    {
+        return $this->hasOne(ImageEntity::class, ['id' => 'image_id']);
     }
 
     public function getProductCategories()

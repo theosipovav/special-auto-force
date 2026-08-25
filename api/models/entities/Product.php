@@ -17,11 +17,12 @@ use yii\db\ActiveRecord;
  * @property float|null $price Цена
  * @property int $in_stock Наличие на складе (1 - в наличии, 0 - под заказ)
  * @property int $orders_count Количество заказов / популярность
- * @property string|null $main_image Главное фото
+ * @property int|null $main_image_id ID главного изображения
  * @property string|null $manufacturer Производитель
  * @property string|null $country Страна производства
  * @property string $created_at Дата создания
  *
+ * @property ImageEntity|null $mainImageEntity
  * @property ProductCategory[] $productCategories
  * @property Category[] $categories
  * @property ProductImage[] $productImages
@@ -40,8 +41,10 @@ class Product extends ActiveRecord
             [['short_description', 'long_description', 'info'], 'string'],
             [['price'], 'number', 'min' => 0],
             [['in_stock', 'orders_count'], 'integer'],
-            [['title', 'main_image', 'manufacturer'], 'string', 'max' => 255],
+            [['title', 'manufacturer'], 'string', 'max' => 255],
             [['article', 'country'], 'string', 'max' => 64],
+            [['main_image_id'], 'integer'],
+            [['main_image_id'], 'exist', 'skipOnError' => true, 'targetClass' => ImageEntity::class, 'targetAttribute' => ['main_image_id' => 'id']],
             [['created_at'], 'safe'],
         ];
     }
@@ -58,7 +61,7 @@ class Product extends ActiveRecord
             'price' => 'Цена',
             'in_stock' => 'В наличии',
             'orders_count' => 'Количество заказов',
-            'main_image' => 'Главное фото',
+            'main_image_id' => 'Главное фото',
             'manufacturer' => 'Производитель',
             'country' => 'Страна',
             'created_at' => 'Дата добавления',
@@ -83,11 +86,11 @@ class Product extends ActiveRecord
             },
             'ordersCount' => 'orders_count',
             'mainImage' => function () {
-                if (!empty($this->main_image)) {
-                    return $this->main_image;
+                if ($this->mainImageEntity) {
+                    return $this->mainImageEntity->url;
                 }
                 $firstImage = $this->productImages[0] ?? null;
-                return $firstImage ? $firstImage->image : 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=800';
+                return $firstImage ? $firstImage->imageEntity->url : 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=800';
             },
             'manufacturer',
             'country',
@@ -104,7 +107,7 @@ class Product extends ActiveRecord
                     return [
                         'id' => $img->id,
                         'title' => $img->title,
-                        'image' => $img->image,
+                        'image' => $img->imageEntity ? $img->imageEntity->url : null,
                     ];
                 }, $this->productImages);
             },
@@ -115,6 +118,7 @@ class Product extends ActiveRecord
     public function extraFields()
     {
         return [
+            'mainImageEntity',
             'productCategories',
             'categories',
             'productImages',
@@ -130,6 +134,11 @@ class Product extends ActiveRecord
     {
         return $this->hasMany(Category::class, ['id' => 'category_id'])
             ->via('productCategories');
+    }
+
+    public function getMainImageEntity()
+    {
+        return $this->hasOne(ImageEntity::class, ['id' => 'main_image_id']);
     }
 
     public function getProductImages()
