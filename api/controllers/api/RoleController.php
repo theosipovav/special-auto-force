@@ -6,6 +6,7 @@ use Yii;
 use yii\filters\auth\HttpBearerAuth;
 use yii\web\ForbiddenHttpException;
 use app\models\entities\Role;
+use app\models\entities\User;
 
 /**
  * REST API контроллер ролей пользователей (Role)
@@ -29,6 +30,7 @@ class RoleController extends BaseApiController
     public function checkAccess($action, $model = null, $params = [])
     {
         if (in_array($action, ['create', 'update', 'delete'])) {
+            /** @var User $currentUser */
             $currentUser = Yii::$app->user->identity;
             if (!$currentUser || (!$currentUser->hasRole('admin') && !$currentUser->hasRole('Администратор'))) {
                 throw new ForbiddenHttpException('Управление ролями доступно только администратору.');

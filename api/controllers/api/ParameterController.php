@@ -6,6 +6,7 @@ use Yii;
 use yii\filters\auth\HttpBearerAuth;
 use yii\web\ForbiddenHttpException;
 use app\models\entities\Parameter;
+use app\models\entities\User;
 
 /**
  * REST API контроллер параметров сайта (Parameter)
@@ -42,6 +43,7 @@ class ParameterController extends BaseApiController
     public function checkAccess($action, $model = null, $params = [])
     {
         if (in_array($action, ['create', 'update', 'delete'])) {
+            /** @var User $currentUser */
             $currentUser = Yii::$app->user->identity;
             if (!$currentUser || (!$currentUser->hasRole('admin') && !$currentUser->hasRole('Администратор'))) {
                 throw new ForbiddenHttpException('Доступ разрешен только администраторам.');

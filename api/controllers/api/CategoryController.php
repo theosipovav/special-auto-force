@@ -8,7 +8,7 @@ use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\data\ActiveDataProvider;
 use app\models\entities\Category;
-use app\models\entities\Product;
+use app\models\entities\User;
 
 /**
  * REST API контроллер категорий (Category)
@@ -92,6 +92,8 @@ class CategoryController extends BaseApiController
     public function checkAccess($action, $model = null, $params = [])
     {
         if (in_array($action, ['create', 'update', 'delete'])) {
+
+            /** @var User $currentUser */
             $currentUser = Yii::$app->user->identity;
             if (!$currentUser || (!$currentUser->hasRole('admin') && !$currentUser->hasRole('Администратор'))) {
                 throw new ForbiddenHttpException('Доступ разрешен только администраторам.');

@@ -36,8 +36,8 @@ class LoginForm extends Model
     public function validatePassword($attribute, $params)
     {
         if (!$this->hasErrors()) {
+            /** @var User $user */
             $user = $this->getUser();
-
             if (!$user || !$user->validatePassword($this->password)) {
                 $this->addError($attribute, 'Неверный логин или пароль.');
             }
@@ -59,6 +59,8 @@ class LoginForm extends Model
     public function login(): ?array
     {
         if ($this->validate()) {
+
+            /** @var User $user */
             $user = $this->getUser();
             $token = $user->generateAccessToken();
 

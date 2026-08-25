@@ -7,7 +7,7 @@ use yii\filters\auth\HttpBearerAuth;
 use yii\web\ForbiddenHttpException;
 use yii\data\ActiveDataProvider;
 use app\models\entities\ProductImage;
-use app\models\entities\ImageEntity;
+use app\models\entities\User;
 
 /**
  * REST API контроллер изображений товаров (ProductImage)
@@ -143,6 +143,7 @@ class ProductImageController extends BaseApiController
     {
         if (in_array($action, ['create', 'update', 'delete'])) {
             $currentUser = Yii::$app->user->identity;
+            /** @var User $currentUser */
             if (!$currentUser || (!$currentUser->hasRole('admin') && !$currentUser->hasRole('Администратор'))) {
                 throw new ForbiddenHttpException('Доступ разрешен только администраторам.');
             }

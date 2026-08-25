@@ -127,6 +127,7 @@ class UserController extends BaseApiController
     public function checkAccess($action, $model = null, $params = [])
     {
         if (in_array($action, ['create', 'update', 'delete', 'assign-role', 'revoke-role'])) {
+            /** @var User $currentUser */
             $currentUser = Yii::$app->user->identity;
             if (!$currentUser) {
                 throw new ForbiddenHttpException('Требуется авторизация.');
