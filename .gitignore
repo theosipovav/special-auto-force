@@ -4,20 +4,17 @@
 __pycache__/
 *.o
 *.obj
-dist/
-build/
-target/
+*.class
+*.exe
+*.dll
+*.so
+*.a
+*.out
 
 # Dependencies
-node_modules/
 vendor/
-*.egg-info/
-.Python
-venv/
-.venv/
-.env
-.env.local
-.env.*
+node_modules/
+composer.lock
 
 # Logs and temp files
 *.log
@@ -25,20 +22,26 @@ venv/
 *.swp
 *.swo
 
+# Environment
+.env
+.env.local
+*.env.*
+
 # Editors
 .vscode/
 .idea/
-*.sublime-project
-*.sublime-workspace
 
-# OS generated files
+# OS specific
 .DS_Store
 Thumbs.db
 
-# Yii framework specific
-yii
-assets/
-runtime/
-yii_testdrive.lock
-composer.phar
+# Coverage and testing
+.coverage
+coverage/
+htmlcov/
+
+# Build directories
+dist/
+build/
+target/
 ```

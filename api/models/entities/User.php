@@ -21,12 +21,13 @@ use Firebase\JWT\Key;
  * @property string $surname Фамилия (Surname)
  * @property string|null $patronymic Отчество (Patronymic)
  * @property string|null $date_of_birth Дата рождения (DateOfBirth)
- * @property string|null $image Фото (Image) ссылка на аватар
+ * @property int|null $image_id ID изображения аватара
  * @property string $date_of_registration Дата регистрации (DatOfRegistration)
  * @property string|null $auth_key Ключ авторизации
  * @property string|null $access_token Токен доступа REST API
  * @property int $status Статус аккаунта (10 = активен, 0 = заблокирован)
  *
+ * @property ImageEntity|null $imageEntity
  * @property UserRole[] $userRoles
  * @property Role[] $roles
  */
@@ -56,7 +57,9 @@ class User extends ActiveRecord implements IdentityInterface
             [['date_of_birth', 'date_of_registration'], 'safe'],
             [['username', 'name', 'surname', 'patronymic'], 'string', 'max' => 64],
             [['phone'], 'string', 'max' => 32],
-            [['address', 'image'], 'string', 'max' => 255],
+            [['address'], 'string', 'max' => 255],
+            [['image_id'], 'integer'],
+            [['image_id'], 'exist', 'skipOnError' => true, 'targetClass' => ImageEntity::class, 'targetAttribute' => ['image_id' => 'id']],
             ['password', 'string', 'min' => 6, 'message' => 'Пароль должен содержать минимум 6 символов'],
             ['status', 'default', 'value' => self::STATUS_ACTIVE],
             ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_DELETED]],
@@ -76,7 +79,7 @@ class User extends ActiveRecord implements IdentityInterface
             'surname' => 'Фамилия (Surname)',
             'patronymic' => 'Отчество (Patronymic)',
             'date_of_birth' => 'Дата рождения (DateOfBirth)',
-            'image' => 'Фото аватара (Image)',
+            'image_id' => 'Фото аватара (Image)',
             'date_of_registration' => 'Дата регистрации (DatOfRegistration)',
             'status' => 'Статус аккаунта',
         ];
@@ -99,7 +102,9 @@ class User extends ActiveRecord implements IdentityInterface
             'dateOfBirth' => function () {
                 return $this->date_of_birth;
             },
-            'image',
+            'image' => function () {
+                return $this->imageEntity ? $this->imageEntity->url : null;
+            },
             'datOfRegistration' => function () {
                 return $this->date_of_registration;
             },
@@ -121,6 +126,7 @@ class User extends ActiveRecord implements IdentityInterface
     public function extraFields()
     {
         return [
+            'imageEntity',
             'userRoles',
             'roles',
         ];
@@ -129,6 +135,11 @@ class User extends ActiveRecord implements IdentityInterface
     public function getFullName(): string
     {
         return trim("{$this->surname} {$this->name} {$this->patronymic}");
+    }
+
+    public function getImageEntity()
+    {
+        return $this->hasOne(ImageEntity::class, ['id' => 'image_id']);
     }
 
     public function getUserRoles()
