@@ -78,7 +78,7 @@ class ProductController extends BaseApiController
             } elseif ($sortParam === 'price_desc') {
                 $order = ['price' => SORT_DESC];
             } elseif ($sortParam === 'popular') {
-                $order = ['orders_count' => SORT_DESC, 'id' => SORT_DESC];
+                $order = ['id' => SORT_DESC];
             } elseif ($sortParam === 'title') {
                 $order = ['title' => SORT_ASC];
             }
@@ -120,14 +120,14 @@ class ProductController extends BaseApiController
 
     /**
      * GET /api/products/popular
-     * Карусель: 10 самых популярных товаров (по количеству заказов / спросу)
+     * Карусель: 10 самых популярных товаров (по дате добавления)
      */
     public function actionPopular()
     {
         $limit = (int) Yii::$app->request->get('limit', 10);
         $products = Product::find()
             ->with(['categories', 'productImages'])
-            ->orderBy(['orders_count' => SORT_DESC, 'id' => SORT_DESC])
+            ->orderBy(['id' => SORT_DESC])
             ->limit($limit)
             ->all();
 
@@ -216,8 +216,9 @@ class ProductController extends BaseApiController
 
         $img = new ProductImage();
         $img->product_id = (int) $id;
+        $img->image_id = Yii::$app->request->getBodyParam('image_id');
         $img->title = Yii::$app->request->getBodyParam('title', $product->title);
-        $img->image = Yii::$app->request->getBodyParam('image');
+        $img->is_main = Yii::$app->request->getBodyParam('is_main', false);
 
         if ($img->save()) {
             return [
@@ -313,16 +314,11 @@ class ProductController extends BaseApiController
     {
         $uploadPath = Yii::getAlias('@webroot/web/uploads/products/');
 
-        // Удаляем главное изображение
-        if (!empty($product->main_image)) {
-            $this->deleteFile($uploadPath, $product->main_image);
-        }
-
         // Удаляем изображения галереи
         $productImages = $product->productImages;
         foreach ($productImages as $image) {
-            if (!empty($image->image)) {
-                $this->deleteFile($uploadPath, $image->image);
+            if (!empty($image->imageEntity)) {
+                $this->deleteFile($uploadPath, $image->imageEntity->path);
             }
         }
     }

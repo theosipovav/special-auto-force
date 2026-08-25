@@ -75,7 +75,7 @@ class CategoryController extends BaseApiController
         } elseif ($sortParam === 'price_desc') {
             $order = ['price' => SORT_DESC];
         } elseif ($sortParam === 'popular') {
-            $order = ['orders_count' => SORT_DESC];
+            $order = ['id' => SORT_DESC];
         }
 
         return new ActiveDataProvider([
