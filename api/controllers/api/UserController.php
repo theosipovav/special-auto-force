@@ -12,10 +12,109 @@ use app\models\entities\Role;
 
 /**
  * REST API контроллер пользователей (User)
+ * 
+ * @SWG\Swagger(
+ *     @SWG\Info(
+ *         title="Users API",
+ *         version="1.0",
+ *         description="API для управления пользователями"
+ *     ),
+ *     basePath="/api"
+ * )
  */
 class UserController extends BaseApiController
 {
     public $modelClass = User::class;
+
+    /**
+     * @SWG\Get(
+     *     path="/users",
+     *     tags={"Users"},
+     *     summary="Получить список пользователей",
+     *     description="Возвращает пагинированный список пользователей с возможностью фильтрации по роли и поиска",
+     *     produces={"application/json"},
+     *     @SWG\Parameter(name="role", in="query", type="string", description="Фильтр по названию роли"),
+     *     @SWG\Parameter(name="q", in="query", type="string", description="Поисковый запрос по username, email, name, surname, phone"),
+     *     @SWG\Parameter(name="page", in="query", type="integer", description="Номер страницы", default=1),
+     *     @SWG\Parameter(name="per-page", in="query", type="integer", description="Количество элементов на странице", default=20),
+     *     @SWG\Response(response=200, description="Список пользователей",
+     *         @SWG\Schema(
+     *             @SWG\Property(property="items", type="array", @SWG\Items(ref="#/definitions/User")),
+     *             @SWG\Property(property="_meta", type="object")
+     *         )
+     *     )
+     * )
+     *
+     * @SWG\Post(
+     *     path="/users",
+     *     tags={"Users"},
+     *     summary="Создать пользователя",
+     *     description="Создание нового пользователя. Требуется авторизация.",
+     *     produces={"application/json"},
+     *     consumes={"application/json"},
+     *     security={{"bearerAuth":{}}},
+     *     @SWG\Parameter(name="body", in="body", required=true, @SWG\Schema(ref="#/definitions/UserCreate")),
+     *     @SWG\Response(response=201, description="Пользователь создан"),
+     *     @SWG\Response(response=403, description="Доступ запрещен"),
+     *     @SWG\Response(response=422, description="Ошибка валидации")
+     * )
+     *
+     * @SWG\Get(
+     *     path="/users/{id}",
+     *     tags={"Users"},
+     *     summary="Получить пользователя по ID",
+     *     description="Возвращает данные пользователя по идентификатору",
+     *     produces={"application/json"},
+     *     @SWG\Parameter(name="id", in="path", type="integer", required=true, description="ID пользователя"),
+     *     @SWG\Response(response=200, description="Данные пользователя", @SWG\Schema(ref="#/definitions/User")),
+     *     @SWG\Response(response=404, description="Пользователь не найден")
+     * )
+     *
+     * @SWG\Put(
+     *     path="/users/{id}",
+     *     tags={"Users"},
+     *     summary="Обновить пользователя",
+     *     description="Полное обновление данных пользователя. Требуется авторизация.",
+     *     produces={"application/json"},
+     *     consumes={"application/json"},
+     *     security={{"bearerAuth":{}}},
+     *     @SWG\Parameter(name="id", in="path", type="integer", required=true, description="ID пользователя"),
+     *     @SWG\Parameter(name="body", in="body", required=true, @SWG\Schema(ref="#/definitions/UserUpdate")),
+     *     @SWG\Response(response=200, description="Пользователь обновлен"),
+     *     @SWG\Response(response=403, description="Доступ запрещен"),
+     *     @SWG\Response(response=404, description="Пользователь не найден"),
+     *     @SWG\Response(response=422, description="Ошибка валидации")
+     * )
+     *
+     * @SWG\Patch(
+     *     path="/users/{id}",
+     *     tags={"Users"},
+     *     summary="Частично обновить пользователя",
+     *     description="Частичное обновление данных пользователя. Требуется авторизация.",
+     *     produces={"application/json"},
+     *     consumes={"application/json"},
+     *     security={{"bearerAuth":{}}},
+     *     @SWG\Parameter(name="id", in="path", type="integer", required=true, description="ID пользователя"),
+     *     @SWG\Parameter(name="body", in="body", required=true, @SWG\Schema(ref="#/definitions/UserUpdate")),
+     *     @SWG\Response(response=200, description="Пользователь обновлен"),
+     *     @SWG\Response(response=403, description="Доступ запрещен"),
+     *     @SWG\Response(response=404, description="Пользователь не найден"),
+     *     @SWG\Response(response=422, description="Ошибка валидации")
+     * )
+     *
+     * @SWG\Delete(
+     *     path="/users/{id}",
+     *     tags={"Users"},
+     *     summary="Удалить пользователя",
+     *     description="Удаление пользователя по ID. Требуется авторизация администратора.",
+     *     produces={"application/json"},
+     *     security={{"bearerAuth":{}}},
+     *     @SWG\Parameter(name="id", in="path", type="integer", required=true, description="ID пользователя"),
+     *     @SWG\Response(response=204, description="Пользователь удален"),
+     *     @SWG\Response(response=403, description="Доступ запрещен"),
+     *     @SWG\Response(response=404, description="Пользователь не найден")
+     * )
+     */
 
     public function behaviors()
     {
@@ -70,8 +169,29 @@ class UserController extends BaseApiController
     }
 
     /**
-     * POST /api/users/{id}/roles
-     * Назначить роль пользователю
+     * @SWG\Post(
+     *     path="/users/{id}/assign-role",
+     *     tags={"Users"},
+     *     summary="Назначить роль пользователю",
+     *     description="Назначение роли пользователю по ID. Требуется авторизация.",
+     *     produces={"application/json"},
+     *     consumes={"application/json"},
+     *     security={{"bearerAuth":{}}},
+     *     @SWG\Parameter(name="id", in="path", type="integer", required=true, description="ID пользователя"),
+     *     @SWG\Parameter(
+     *         name="body",
+     *         in="body",
+     *         required=true,
+     *         @SWG\Schema(
+     *             @SWG\Property(property="roleId", type="integer", description="ID роли"),
+     *             @SWG\Property(property="role", type="string", description="Название роли (title)")
+     *         )
+     *     ),
+     *     @SWG\Response(response=200, description="Роль назначена"),
+     *     @SWG\Response(response=400, description="Не указан roleId или role"),
+     *     @SWG\Response(response=403, description="Доступ запрещен"),
+     *     @SWG\Response(response=404, description="Пользователь не найден")
+     * )
      */
     public function actionAssignRole($id)
     {
