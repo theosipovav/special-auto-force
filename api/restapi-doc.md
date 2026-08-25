@@ -754,7 +754,7 @@ Content-Type: application/json
   "inStock": true,
   "categoryIds": [2, 3]
 }
-
+ 
 Ответ:
 {
   "success": true,
