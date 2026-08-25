@@ -8,10 +8,10 @@ use yii\db\ActiveRecord;
 /**
  * Модель сущности "Связь между товарами и фотографиями" (ProductImage)
  *
- * @property int $id Id
- * @property int $product_id ProductId
- * @property string $title Название (Title)
- * @property int|null $image_id ID изображения
+ * @property int $product_id Идентификатор продукиа
+ * @property int|null $image_id Идентификатор изображения
+ * @property bool $is_main Главное фото
+ * @property string $title Название
  *
  * @property Product $product
  * @property ImageEntity|null $imageEntity

@@ -1,0 +1,46 @@
+{
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "path": "api"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/runtime": true,
+      //"**/vendor": true,
+      "**/.git": true,
+      "**/.vscode": true,
+      // "**/composer.*": true
+    },
+    "cSpell.words": [
+      "парсинга",
+      "подпуть",
+      "псевдо",
+      "сериализации",
+      "слеш",
+      "слеши",
+      "Хелпер",
+      "эндпоинты",
+      "dropexternalfile",
+      "dtos",
+      "employeenumber",
+      "Facl",
+      "getfacl",
+      "lobstorage",
+      "samaccountname",
+      "startatom"
+    ],
+    "php.validate.executablePath": "/mnt/data/projects/docker/start-pgsqldev-redos.p33.st/php/php",
+    "Prettier-SQL.SQLFlavourOverride": "postgresql",
+    "Prettier-SQL.linesBetweenQueries": 0,
+    "terminal.integrated.defaultProfile.linux": "fish",
+    "terminal.integrated.profiles.linux": {
+      "fish": {
+        "path": "/usr/bin/fish",
+      },
+    },
+  }
+}
