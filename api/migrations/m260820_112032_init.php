@@ -79,13 +79,10 @@ class m260820_112032_init extends Migration
             'article' => $this->string(64),
             'price' => $this->decimal(10, 2),
             'in_stock' => $this->boolean()->notNull()->defaultValue(true),
-            'orders_count' => $this->integer()->notNull()->defaultValue(0),
-            'main_image_id' => $this->integer(),
             'manufacturer' => $this->string(255),
             'country' => $this->string(64),
             'created_at' => $this->dateTime()->notNull(),
         ], $tableOptions);
-        $this->addForeignKey('fk-product-main_image_id', '{{%product}}', 'main_image_id', '{{%image}}', 'id', 'SET NULL', 'CASCADE');
 
         // 7. Таблица "product_category"
         $this->createTable('{{%product_category}}', [
@@ -98,13 +95,14 @@ class m260820_112032_init extends Migration
 
         // 8. Таблица "product_image"
         $this->createTable('{{%product_image}}', [
-            'id' => $this->primaryKey(),
             'product_id' => $this->integer()->notNull(),
+            'image_id' => $this->integer()->notNull(),
+            'is_main' => $this->boolean()->notNull()->defaultValue(false),
             'title' => $this->string(255)->notNull(),
-            'image_id' => $this->integer(),
         ], $tableOptions);
+        $this->addPrimaryKey('pk-product_image', '{{%product_image}}', ['product_id', 'image_id']);
         $this->addForeignKey('fk-product_image-product_id', '{{%product_image}}', 'product_id', '{{%product}}', 'id', 'CASCADE', 'CASCADE');
-        $this->addForeignKey('fk-product_image-image_id', '{{%product_image}}', 'image_id', '{{%image}}', 'id', 'SET NULL', 'CASCADE');
+        $this->addForeignKey('fk-product_image-image_id', '{{%product_image}}', 'image_id', '{{%image}}', 'id', 'CASCADE', 'CASCADE');
 
         // 9. Таблица "request" (CustomerRequest)
         $this->createTable('{{%request}}', [
@@ -157,15 +155,14 @@ class m260820_112032_init extends Migration
         $this->dropForeignKey('fk-request-product_id', '{{%request}}');
         $this->dropTable('{{%request}}');
 
-        $this->dropForeignKey('fk-product_image-image_id', '{{%product_image}}');
-        $this->dropForeignKey('fk-product_image-product_id', '{{%product_image}}');
-        $this->dropTable('{{%product_image}}');
-
         $this->dropForeignKey('fk-product_category-product_id', '{{%product_category}}');
         $this->dropForeignKey('fk-product_category-category_id', '{{%product_category}}');
         $this->dropTable('{{%product_category}}');
 
-        $this->dropForeignKey('fk-product-main_image_id', '{{%product}}');
+        $this->dropForeignKey('fk-product_image-image_id', '{{%product_image}}');
+        $this->dropForeignKey('fk-product_image-product_id', '{{%product_image}}');
+        $this->dropTable('{{%product_image}}');
+
         $this->dropTable('{{%product}}');
 
         $this->dropForeignKey('fk-category-image_id', '{{%category}}');

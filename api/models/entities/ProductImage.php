@@ -8,8 +8,8 @@ use yii\db\ActiveRecord;
 /**
  * Модель сущности "Связь между товарами и фотографиями" (ProductImage)
  *
- * @property int $product_id Идентификатор продукиа
- * @property int|null $image_id Идентификатор изображения
+ * @property int $product_id Идентификатор продукта
+ * @property int $image_id Идентификатор изображения
  * @property bool $is_main Главное фото
  * @property string $title Название
  *
@@ -26,9 +26,11 @@ class ProductImage extends ActiveRecord
     public function rules()
     {
         return [
-            [['product_id', 'title'], 'required', 'message' => 'Поле "{attribute}" обязательно для заполнения'],
+            [['product_id', 'image_id', 'title'], 'required', 'message' => 'Поле "{attribute}" обязательно для заполнения'],
             [['product_id', 'image_id'], 'integer'],
+            [['is_main'], 'boolean'],
             [['title'], 'string', 'max' => 255],
+            [['product_id', 'image_id'], 'unique', 'targetAttribute' => ['product_id', 'image_id'], 'message' => 'Такая связка продукта и изображения уже существует'],
             [['product_id'], 'exist', 'skipOnError' => true, 'targetClass' => Product::class, 'targetAttribute' => ['product_id' => 'id']],
             [['image_id'], 'exist', 'skipOnError' => true, 'targetClass' => ImageEntity::class, 'targetAttribute' => ['image_id' => 'id']],
         ];
@@ -37,22 +39,20 @@ class ProductImage extends ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
-            'product_id' => 'Идентификатор товара',
-            'title' => 'Название фото',
-            'image_id' => 'Изображение',
+            'product_id' => 'Идентификатор продукта',
+            'image_id' => 'Идентификатор изображения',
+            'is_main' => 'Главное фото',
+            'title' => 'Название',
         ];
     }
 
     public function fields()
     {
         return [
-            'id',
-            'productId' => 'product_id',
+            'product_id',
+            'image_id',
+            'is_main',
             'title',
-            'image' => function () {
-                return $this->imageEntity ? $this->imageEntity->url : null;
-            },
         ];
     }
 
@@ -72,5 +72,13 @@ class ProductImage extends ActiveRecord
     public function getImageEntity()
     {
         return $this->hasOne(ImageEntity::class, ['id' => 'image_id']);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public static function primaryKey()
+    {
+        return ['product_id', 'image_id'];
     }
 }
