@@ -17,25 +17,24 @@ use yii\web\Response;
  */
 class DocsController extends Controller
 {
+    public $layout = false;
+
     public function beforeAction($action)
     {
-        if ($action->id === 'json-schema') {
-            // формат выставим в самом action
-        } else {
+        if ($action->id !== 'json-schema') {
             Yii::$app->response->format = Response::FORMAT_HTML;
         }
         return parent::beforeAction($action);
     }
 
-    public function actions(): array
+    /**
+     * GET /docs — Swagger UI с persistAuthorization
+     */
+    public function actionIndex()
     {
-        return [
-            'index' => [
-                'class' => 'yii2mod\swagger\SwaggerUIRenderer',
-                'restUrl' => Url::to(['docs/json-schema'], true),
-            ],
-            // json-schema делаем своим методом, не через OpenAPIRenderer
-        ];
+        return $this->render('@app/views/docs/swagger-ui', [
+            'restUrl' => Url::to(['docs/json-schema'], true),
+        ]);
     }
 
     /**
@@ -51,7 +50,6 @@ class DocsController extends Controller
             Yii::getAlias('@app/models'),
         ]);
 
-        // swagger-php 2.x: json_encode / (string), не toJson()
         $data = json_decode(json_encode($swagger), true);
         if (!is_array($data)) {
             $data = json_decode((string) $swagger, true) ?: [];
@@ -66,7 +64,6 @@ class DocsController extends Controller
             ],
         ];
 
-        // Все методы по умолчанию требуют Bearer
         $data['security'] = [
             ['Bearer' => []],
         ];
