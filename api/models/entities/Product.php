@@ -10,8 +10,8 @@ use yii\db\ActiveRecord;
  *
  * @property int $id Id
  * @property string $title Название (Title)
- * @property string $short_description Краткое описание (ShortDescription)
- * @property string $long_description Подробное описание (LongDescription)
+ * @property string|null $short_description Краткое описание (ShortDescription)
+ * @property string|null $long_description Подробное описание (LongDescription)
  * @property string|null $info Дополнительная информация (Info)
  * @property string|null $article Артикул / Заводской код
  * @property float|null $price Цена
@@ -37,7 +37,7 @@ class Product extends ActiveRecord
     public function rules()
     {
         return [
-            [['title', 'short_description', 'long_description'], 'required', 'message' => 'Поле "{attribute}" обязательно для заполнения'],
+            [['title'], 'required', 'message' => 'Поле "{attribute}" обязательно для заполнения'],
             [['short_description', 'long_description', 'info'], 'string'],
             [['price'], 'number', 'min' => 0],
             [['in_stock'], 'integer'],

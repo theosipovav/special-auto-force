@@ -14,8 +14,8 @@ use app\models\dtos\response\ProductResponseDto;
 use app\models\dtos\response\CategoryResponseDto;
 use app\models\dtos\response\ProductImageResponseDto;
 use \yii\web\UnprocessableEntityHttpException;
-use \yii\web\ServerErrorHttpException;
 use app\models\dtos\request\FormFileImageDto;
+use yii\web\ServerErrorHttpException;
 
 /**
  * Продукция (администратор)
@@ -103,7 +103,7 @@ class ProductController extends BaseApiAdminController
      * Создание нового товара.
      *
      * @SWG\Post(
-     *     path="admin/product",
+     *     path="/admin/product",
      *     tags={"admin / product controller"},
      *     operationId="adminProductCreate",
      *     summary="Создать товар",
@@ -124,16 +124,13 @@ class ProductController extends BaseApiAdminController
         $this->checkAccess();
         $request = new CreateProductRequest();
         $request->load(Yii::$app->request->getBodyParams(), '');
-
         if (!$request->validate()) {
             $errorString = json_encode($request->getErrors(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             Yii::error('Ошибка валидации CreateProductRequest: ' . $errorString, __METHOD__);
             throw new UnprocessableEntityHttpException('Проверьте правильность заполнения данных и повторите запрос');
         }
-
         $transaction = Yii::$app->db->beginTransaction();
         try {
-
             // Создаем продукцию
             $product = new Product();
             $product->title = $request->title;
@@ -187,7 +184,7 @@ class ProductController extends BaseApiAdminController
         } catch (\Exception $e) {
             $transaction->rollBack();
             Yii::error("Не удалось создать товар: " . $e->getMessage(), __METHOD__);
-            throw new yii\web\ServerErrorHttpException('Не удалось создать товар');
+            throw new ServerErrorHttpException('Не удалось создать товар.');
         }
     }
 
@@ -497,7 +494,7 @@ class ProductController extends BaseApiAdminController
         } catch (\Exception $e) {
             $transaction->rollBack();
             Yii::error("Ошибка при удалении товара #{$id}: " . $e->getMessage(), __METHOD__);
-            throw new yii\web\ServerErrorHttpException('Ошибка при удалении товара и связанных данных.');
+            throw new ServerErrorHttpException('Ошибка при удалении товара и связанных данных.');
         }
         Yii::$app->response->statusCode = 204;
         return null;

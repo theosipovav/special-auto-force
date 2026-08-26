@@ -152,12 +152,10 @@ class CategoryController extends BaseApiAdminController
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            if ($request->title !== null) {
-                $category->title = $request->title;
-            }
-            if ($request->description !== null) {
-                $category->description = $request->description;
-            }
+
+            $category->title = $request->title;
+            $category->description = $request->description;
+            
             if ($request->updateImage) {
                 $removeImage = ImageEntity::findOne($category->image_id);
                 $removeImage->DeleteLocalFile();
@@ -231,11 +229,16 @@ class CategoryController extends BaseApiAdminController
             if (!empty($category->image_id)) {
                 $removeImage = ImageEntity::findOne($category->image_id);
                 $removeImage->DeleteLocalFile();
+                if (!$removeImage->delete()) {
+                    throw new \Exception('Не удалось удалить изображения: ' . json_encode($removeImage->getErrors(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                }
             }
             if (!$category->delete()) {
-                
                 throw new \Exception('Не удалось удалить файл изображения: ' . json_encode($category->getErrors(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
             }
+
+
+
             $transaction->commit();
             Yii::$app->response->statusCode = 204;
             return null;

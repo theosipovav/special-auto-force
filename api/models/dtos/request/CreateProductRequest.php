@@ -50,7 +50,7 @@ class CreateProductRequest extends Model
     public function rules()
     {
         return [
-            [['title', 'shortDescription', 'longDescription'], 'required'],
+            [['title'], 'required'],
             [['title', 'article', 'manufacturer', 'country'], 'string', 'max' => 255],
             [['shortDescription', 'longDescription', 'info'], 'string'],
             [['price'], 'number', 'min' => 0],

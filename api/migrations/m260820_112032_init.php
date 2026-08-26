@@ -73,15 +73,15 @@ class m260820_112032_init extends Migration
         $this->createTable('{{%product}}', [
             'id' => $this->primaryKey(),
             'title' => $this->string(255)->notNull(),
-            'short_description' => $this->text()->notNull(),
-            'long_description' => $this->text()->notNull(),
+            'short_description' => $this->text(),
+            'long_description' => $this->text(),
             'info' => $this->text(),
             'article' => $this->string(64),
             'price' => $this->decimal(10, 2),
             'in_stock' => $this->boolean()->notNull()->defaultValue(true),
             'manufacturer' => $this->string(255),
             'country' => $this->string(64),
-            'created_at' => $this->dateTime()->notNull(),
+            'created_at' => $this->dateTime()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),
         ], $tableOptions);
 
         // 7. Таблица "product_category"
@@ -111,12 +111,12 @@ class m260820_112032_init extends Migration
             'phone' => $this->string(32)->notNull(),
             'email' => $this->string(191)->notNull(),
             'wishlist' => $this->text(),
-            'created_at' => $this->dateTime()->notNull(),
+            'created_at' => $this->dateTime()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),
             'status' => $this->string(32)->notNull()->defaultValue('new'),
             'admin_notes' => $this->text(),
         ], $tableOptions);
         $this->addForeignKey('fk-request-product_id', '{{%request}}', 'product_id', '{{%product}}', 'id', 'SET NULL', 'CASCADE');
-        
+
         // 10. Таблица "page"
         $this->createTable('{{%page}}', [
             'id' => $this->primaryKey(),
@@ -149,7 +149,7 @@ class m260820_112032_init extends Migration
         // Удаляем в обратном порядке создания
         $this->dropForeignKey('fk-parameter-pageId', '{{%parameter}}');
         $this->dropTable('{{%parameter}}');
-        
+
         $this->dropTable('{{%page}}');
 
         $this->dropForeignKey('fk-request-product_id', '{{%request}}');

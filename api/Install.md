@@ -85,5 +85,12 @@ chown www-data:www-data web web/assets web/uploads web/uploads/images
 
 ## Применение миграции
 ```bash
+
+```
+
+```bash
+# Через консоль сервера 
 php yii migrate
+# Через docker
+docker exec -it reg-ru-php php ./api/yii migrate
 ```
