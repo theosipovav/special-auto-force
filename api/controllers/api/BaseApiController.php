@@ -4,9 +4,6 @@ namespace app\controllers\api;
 
 use yii\rest\ActiveController;
 use yii\filters\Cors;
-use yii\filters\auth\HttpBearerAuth;
-use yii\filters\auth\QueryParamAuth;
-use yii\filters\auth\CompositeAuth;
 use yii\web\Response;
 
 /**
@@ -42,9 +39,7 @@ abstract class BaseApiController extends ActiveController
         return $behaviors;
     }
 
-    /**
-     * Helper для настройки Bearer JWT аутентификации на защищенных действиях
-     */
+    /*
     protected function applyBearerAuth(array $onlyActions = [])
     {
         return [
@@ -61,5 +56,6 @@ abstract class BaseApiController extends ActiveController
             ],
         ];
     }
+    */
 
 }

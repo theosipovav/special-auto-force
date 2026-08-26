@@ -1,6 +1,7 @@
 <?php
 
 $main = require __DIR__ . '/main.php';
+$routeRules = require __DIR__ . '/route_rules.php';
 
 $config = yii\helpers\ArrayHelper::merge($main, [
     'components' => [
@@ -38,60 +39,7 @@ $config = yii\helpers\ArrayHelper::merge($main, [
             'enableStrictParsing' => false,
             'showScriptName' => false,
             'baseUrl' => '/api',
-            'rules' => [
-
-                // WEB
-
-                'GET docs' => 'docs/index',
-                'GET docs/json-schema' => 'docs/json-schema',
-
-                // ===== ПУБЛИЧНОЕ API =====
-
-                'GET hello' => 'api/site/hello',
-
-                // --- Аутентификация ---
-                'POST auth/login' => 'api/auth/login',
-                'POST auth/signup' => 'api/auth/signup',
-                'GET auth/me' => 'api/auth/me',
-                'POST auth/refresh' => 'api/auth/refresh',
-
-
-                // --- Продукция ---
-                'GET products'           => 'api/product/index',
-                'GET products/latest'    => 'api/product/latest',
-                'GET products/popular'   => 'api/product/popular',
-                'GET products/search'    => 'api/product/search',
-
-                'GET categories/<id:\d+>/products' => 'api/category/products',
-                'GET categories/tree' => 'api/category/tree',
-
-                
-                'GET parameters/map' => 'api/parameter/map',
-
-                // ===== ПАНЕЛЬ АДМИНИСТРИРОВАНИЯ =====
-
-                'POST   admin/products/<id:\d+>/sync-categories'   => 'api/admin/product/sync-categories',
-                'POST   admin/products/<id:\d+>/images'            => 'api/admin/product/add-image',
-
-                // --- CRUD (RESTful) ---
-                [
-                    'class' => 'yii\rest\UrlRule',
-                    'controller' => [
-                        'users' => 'api/user',
-                        'roles' => 'api/role',
-                        'categories' => 'api/category',
-                        'admin/products' => 'api/admin/product',
-                        'product-images' => 'api/product-image',
-                        'parameters' => 'api/parameter',
-                        'requests' => 'api/request',
-                        'admin/image' => 'api/admin/image',
-                    ],
-                    'pluralize' => false,
-                    'extraPatterns' => [
-                        'OPTIONS <action>' => 'options',
-                    ],
-                ],
-            ],
+            'rules' => $routeRules,
         ],
         'assetManager' => [
             'basePath' => '@app/web/assets',

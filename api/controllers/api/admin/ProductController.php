@@ -9,41 +9,38 @@ use app\models\entities\ProductCategory;
 use app\models\entities\ProductImage;
 use app\models\entities\ImageEntity;
 use app\models\dtos\request\CreateProductRequest;
-use app\models\dtos\response\Ok201ResponseDto;
+use app\models\dtos\request\UpdateProductRequest;
+use app\models\dtos\response\ProductResponseDto;
+use app\models\dtos\response\CategoryResponseDto;
+use app\models\dtos\response\ProductImageResponseDto;
+use \yii\web\UnprocessableEntityHttpException;
+use \yii\web\ServerErrorHttpException;
+use app\models\dtos\request\FormFileImageDto;
 
 /**
- * Админский REST API контроллер товаров (панель администрирования).
+ * Продукция (администратор)
  *
- * Все методы требуют авторизации (Bearer JWT) и роли admin / manager.
- *
- * Маршруты:
- *  - GET    /api/admin/products                  — список (CRUD index)
- *  - GET    /api/admin/products/{id}             — просмотр (CRUD view)
- *  - POST   /api/admin/products                  — создание (CRUD create)
- *  - PUT    /api/admin/products/{id}             — обновление (CRUD update)
- *  - DELETE /api/admin/products/{id}             — удаление (CRUD delete)
- *  - POST   /api/admin/products/{id}/sync-categories — привязка категорий
- *  - POST   /api/admin/products/{id}/images      — добавление фото
+ * @SWG\Tag(
+ *     name="admin / product controller",
+ *     description="Управление продукцией."
+ * )
  */
 class ProductController extends BaseApiAdminController
 {
     public $modelClass = Product::class;
 
-    /**
-     * Настраиваем стандартные CRUD-действия.
-     * - index: кастомный DataProvider с фильтрами/сортировкой
-     * - view, update: используем стандартные действия родителя
-     * - create, delete: переопределены вручную ниже
-     */
+
     public function actions()
     {
         $actions = parent::actions();
 
-        // Переопределяются вручную
-        unset($actions['create']);
-        unset($actions['delete']);
-
-        
+        // Удаляем все, кроме разрешённых views
+        $allowed = [];
+        foreach ($actions as $key => $value) {
+            if (!in_array($key, $allowed)) {
+                unset($actions[$key]);
+            }
+        }
 
         // Кастомный провайдер для списка
         $actions['index']['prepareDataProvider'] = function () {
@@ -101,28 +98,43 @@ class ProductController extends BaseApiAdminController
     }
 
 
+
     /**
-     * POST /api/admin/products
      * Создание нового товара.
      *
-     * @return Ok201ResponseDto
-     * @throws yii\web\ServerErrorHttpException
+     * @SWG\Post(
+     *     path="admin/product",
+     *     tags={"admin / product controller"},
+     *     operationId="adminProductCreate",
+     *     summary="Создать товар",
+     *     description="Создает новый товар и связанные с ним изображения.",
+     *     produces={"application/json"},
+     *     consumes={"application/json"},
+     *
+     *     @SWG\Parameter(name="body", in="body", description="Данные нового товара.", required=true, @SWG\Schema(ref="#/definitions/CreateProductRequest")),
+     *     @SWG\Response(response=201, description="Товар успешно создан", @SWG\Schema(ref="#/definitions/ProductResponseDto")),
+     *     @SWG\Response(response=422, description="Ошибка валидации данных"),
+     *     @SWG\Response(response=401, description="Пользователь не авторизован"),
+     *     @SWG\Response(response=403, description="Недостаточно прав"),
+     *     @SWG\Response(response=500, description="Ошибка при создании товара")
+     * )
      */
     public function actionCreate()
     {
-        $this->checkAccess('create');
+        $this->checkAccess();
         $request = new CreateProductRequest();
         $request->load(Yii::$app->request->getBodyParams(), '');
 
         if (!$request->validate()) {
             $errorString = json_encode($request->getErrors(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             Yii::error('Ошибка валидации CreateProductRequest: ' . $errorString, __METHOD__);
-            throw new yii\web\ServerErrorHttpException('Проверьте правильность заполнения данных и повторите запрос');
+            throw new UnprocessableEntityHttpException('Проверьте правильность заполнения данных и повторите запрос');
         }
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            // 1. Создаем товар
+
+            // Создаем продукцию
             $product = new Product();
             $product->title = $request->title;
             $product->article = $request->article;
@@ -131,74 +143,47 @@ class ProductController extends BaseApiAdminController
             $product->info = $request->info;
             $product->price = $request->price;
             $product->in_stock = (int) $request->inStock;
-            $product->orders_count = (int) $request->ordersCount;
             $product->manufacturer = $request->manufacturer;
             $product->country = $request->country;
-
             if (!$product->save()) {
-                throw new \Exception('Ошибка сохранения товара: ' . json_encode($product->getErrors()));
+                throw new \Exception('Не удалось сохранить продукцию: ' . json_encode($product->getErrors(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
             }
 
-            $mainImageUrl = null;
+            // Основное изображение не задно задано
+            $isSetMain = false;
 
-            // 2. Обрабатываем изображения
             foreach ($request->images as $imgDto) {
-                if (!$imgDto instanceof \app\models\dtos\request\FormFileImageDto) {
+                if (!$imgDto instanceof FormFileImageDto) {
                     continue;
                 }
 
-                $imageData = $this->saveImageFromBase64($imgDto->image, $imgDto->title);
-                if ($imageData === null) {
-                    continue;
+                // Создаем изображение
+                $image = new ImageEntity();
+                $image->saveImageFromBase64($imgDto->base64);
+                if (!$image->save()) {
+                    throw new \Exception('Не удалось сохранить изображение: ' . json_encode($image->getErrors(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
                 }
 
-                // Создаем запись ImageEntity
-                $imageEntity = new ImageEntity();
-                $imageEntity->title = $imgDto->title;
-                $imageEntity->path = $imageData['path'];
-                $imageEntity->url = $imageData['url'];
-
-                if (!$imageEntity->save()) {
-                    throw new \Exception('Ошибка сохранения ImageEntity: ' . json_encode($imageEntity->getErrors()));
-                }
-
-                // Создаем связь ProductImage
+                // Создаем связь продукции с изображениями
                 $productImage = new ProductImage();
                 $productImage->product_id = $product->id;
-                $productImage->image_id = $imageEntity->id;
-                $productImage->title = $imgDto->title;
-                $productImage->is_main = (bool) $imgDto->isMain;
-
+                $productImage->image_id = $image->id;
+                $productImage->title = $image->title;
+                if (!$isSetMain && $imgDto->isMain) {
+                    $productImage->is_main = true;
+                    $isSetMain = true;
+                } else {
+                    $productImage->is_main = false;
+                }
                 if (!$productImage->save()) {
-                    throw new \Exception('Ошибка сохранения ProductImage: ' . json_encode($productImage->getErrors()));
-                }
-
-                if ($imgDto->isMain) {
-                    $mainImageUrl = $imageData['url'];
-                }
-            }
-
-            // Обновляем главное изображение в Product
-            if ($mainImageUrl !== null) {
-                $product->main_image = $mainImageUrl;
-                $product->save(false);
-            }
-
-            // 3. Привязываем категории
-            if (!empty($request->categoryIds)) {
-                foreach ($request->categoryIds as $catId) {
-                    $pc = new ProductCategory();
-                    $pc->product_id = $product->id;
-                    $pc->category_id = (int) $catId;
-                    if (!$pc->save()) {
-                        throw new \Exception('Ошибка привязки категории ' . $catId);
-                    }
+                    throw new \Exception('Не удалось сохранить связь продукции с изображением: ' . json_encode($productImage->getErrors(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
                 }
             }
 
             $transaction->commit();
-
-            return new Ok201ResponseDto("Продукт добавлен", $product->toArray());
+            $responseDto = $this->buildProductResponseDto($product);
+            Yii::$app->response->statusCode = 201;
+            return $responseDto;
         } catch (\Exception $e) {
             $transaction->rollBack();
             Yii::error("Не удалось создать товар: " . $e->getMessage(), __METHOD__);
@@ -207,41 +192,243 @@ class ProductController extends BaseApiAdminController
     }
 
     /**
-     * DELETE /api/admin/products/{id}
-     * Удаление товара и всех связанных файлов изображений.
+     * Обновление товара.
      *
-     * @param int $id
-     * @return null
-     * @throws yii\web\NotFoundHttpException
-     * @throws yii\web\ServerErrorHttpException
+     * Обновляются только основные поля товара.
+     * Категории и изображения изменяются отдельными endpoint.
+     *
+     * @SWG\Put(
+     *     path="/admin/product/{id}",
+     *     tags={"admin / product controller"},
+     *     operationId="adminProductUpdate",
+     *     summary="Обновить товар",
+     *     description="Обновляет основные поля существующего товара. Категории и изображения изменяются отдельными методами.",
+     *     produces={"application/json"},
+     *     consumes={"application/json"},
+     *
+     *     @SWG\Parameter(name="id", in="path", description="ID товара", required=true, type="integer", format="int32"),
+     *     @SWG\Parameter(name="body", in="body", description="Данные для обновления товара.", required=true, @SWG\Schema(ref="#/definitions/UpdateProductRequest")),
+     *     @SWG\Response(response=200, description="Товар успешно обновлен", @SWG\Schema(ref="#/definitions/ProductResponseDto")),
+     *     @SWG\Response(response=404, description="Товар не найден"),
+     *     @SWG\Response(response=422, description="Ошибка валидации данных"),
+     *     @SWG\Response(response=401, description="Пользователь не авторизован"),
+     *     @SWG\Response(response=403, description="Недостаточно прав"),
+     *     @SWG\Response(response=500, description="Ошибка при обновлении товара")
+     * )
      */
-    public function actionDelete($id)
+    public function actionUpdate(int $id)
     {
-        $this->checkAccess('delete');
+        $this->checkAccess();
         $product = Product::findOne($id);
         if (!$product) {
-            throw new yii\web\NotFoundHttpException("Товар #{$id} не найден.");
+            throw new \yii\web\NotFoundHttpException("Товар #{$id} не найден.");
         }
-        // Удаляем файлы изображений
-        $this->deleteImageFiles($product);
-        if ($product->delete() === false) {
-            Yii::error('Product::delete returned false', __METHOD__);
-            throw new yii\web\ServerErrorHttpException('Ошибка при удалении товара.');
+        $request = new UpdateProductRequest();
+        $request->load(Yii::$app->request->getBodyParams(), '');
+        $product->load($request, '');
+        if (!$product->save()) {
+            $errorString = json_encode($product->getErrors(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            Yii::error('Не удалось обновить продукцию: ' . $errorString, __METHOD__);
+            throw new ServerErrorHttpException('Не удалось обновить продукцию: ' . $errorString);
         }
-        return null;
+
+        $responseDto = $this->buildProductResponseDto($product);
+        Yii::$app->response->statusCode = 201;
+        return $responseDto;
     }
 
+
     /**
-     * POST /api/admin/products/{id}/sync-categories
-     * Привязка товара к набору категорий.
+     * Полная синхронизация изображений товара.
      *
-     * @param int $id
-     * @return array
-     * @throws yii\web\NotFoundHttpException
+     * Переданный массив images становится новым состоянием галереи.
+     * Изображения, отсутствующие в запросе, удаляются.
+     *
+     *
+     * @SWG\Post(
+     *     path="/admin/product/{id}/sync-images",
+     *     tags={"admin / product controller"},
+     *     operationId="adminProductSyncImages",
+     *     summary="Синхронизировать изображения товара",
+     *     description="Полностью синхронизирует галерею товара. Можно передавать существующие изображения через image_id или новые изображения через base64.",
+     *     produces={"application/json"},
+     *     consumes={"application/json"},
+     * 
+     *     @SWG\Parameter(name="id", in="path", description="ID товара", required=true, type="integer", format="int32"),
+     *     @SWG\Parameter(name="body", in="body", description="Новый состав изображений товара.", required=true, @SWG\Schema(
+     *             type="object",
+     *             required={"images"},
+     *             @SWG\Property(property="images", type="array", description="Массив изображений товара.", @SWG\Items(ref="#/definitions/FormFileImageDto")
+     *             )
+     *         )
+     *     ),
+     *     @SWG\Response(response=201, description="Изображения успешно синхронизированы", @SWG\Schema(ref="#/definitions/ProductResponseDto")),
+     *     @SWG\Response(response=404, description="Товар не найден"),
+     *     @SWG\Response(response=422, description="Некорректный формат данных"),
+     *     @SWG\Response(response=401, description="Пользователь не авторизован"),
+     *     @SWG\Response(response=403, description="Недостаточно прав"),
+     *     @SWG\Response(response=500, description="Ошибка синхронизации изображений")
+     * )
+     */
+    public function actionSyncImages($id)
+    {
+        $this->checkAccess();
+
+        $product = Product::findOne($id);
+        if (!$product) {
+            throw new \yii\web\NotFoundHttpException("Товар #{$id} не найден.");
+        }
+
+        $formFileImageDtos = Yii::$app->request->getBodyParam('images', []);
+        if (!is_array($formFileImageDtos)) {
+            throw new UnprocessableEntityHttpException('Поле "images" должно быть массивом.');
+        }
+
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            // 1. Получаем существующие связи "товар-изображение"
+            $existingProductImages = ProductImage::findAll(['product_id' => $id]);
+            $existingMap = [];
+            foreach ($existingProductImages as $pi) {
+                $existingMap[$pi->image_id] = $pi;
+            }
+
+            $requestImageIds = [];
+            $isSetMain = false; // Флаг: уже назначили главное изображение
+
+            // 2. Обрабатываем каждое изображение из запроса
+            foreach ($formFileImageDtos as $formFileImageDtos) {
+                // Преобразуем ассоциативный массив в DTO
+                if (is_array($formFileImageDtos)) {
+                    $dto = new FormFileImageDto();
+                    $dto->load($formFileImageDtos, '');
+                } else {
+                    $dto = $formFileImageDtos;
+                }
+
+                if (!$dto instanceof FormFileImageDto) {
+                    throw new \Exception('Неверный формат элемента в массиве images.');
+                }
+                if (!$dto->validate()) {
+                    $errorString = json_encode($dto->getErrors(), JSON_UNESCAPED_UNICODE);
+                    throw new \Exception('Ошибка валидации изображения: ' . $errorString);
+                }
+
+                // Логика "главного" изображения: только первое с isMain=true становится главным
+                $shouldBeMain = !$isSetMain && !empty($dto->isMain);
+                if ($shouldBeMain) {
+                    $isSetMain = true;
+                }
+
+                if (!empty($dto->image_id)) {
+                    // --- СУЩЕСТВУЮЩЕЕ ИЗОБРАЖЕНИЕ: обновляем связь ---
+                    if (!isset($existingMap[$dto->image_id])) {
+                        Yii::warning("image_id={$dto->image_id} не принадлежит товару #{$id}", __METHOD__);
+                        continue;
+                    }
+
+                    $productImage = $existingMap[$dto->image_id];
+                    $productImage->is_main = $shouldBeMain;
+                    if (!empty($dto->title)) {
+                        $productImage->title = $dto->title;
+                    }
+
+                    if (!$productImage->save()) {
+                        throw new \Exception('Ошибка обновления ProductImage: ' . json_encode($productImage->getErrors()));
+                    }
+                    $requestImageIds[] = $dto->image_id;
+                } else {
+                    // --- НОВОЕ ИЗОБРАЖЕНИЕ: создаём из base64 ---
+                    if (empty($dto->base64)) {
+                        continue; // Пропускаем пустые записи
+                    }
+
+                    $image = new ImageEntity();
+                    $image->saveImageFromBase64($dto->base64);
+                    if (!$image->save()) {
+                        throw new \Exception('Ошибка сохранения ImageEntity: ' . json_encode($image->getErrors()));
+                    }
+
+                    $productImage = new ProductImage();
+                    $productImage->product_id = $id;
+                    $productImage->image_id = $image->id;
+                    $productImage->title = !empty($dto->title) ? $dto->title : $image->title;
+                    $productImage->is_main = $shouldBeMain;
+
+                    if (!$productImage->save()) {
+                        throw new \Exception('Ошибка создания ProductImage: ' . json_encode($productImage->getErrors()));
+                    }
+                    $requestImageIds[] = $image->id;
+                }
+            }
+
+            // 3. Удаляем изображения, которых нет в запросе
+            foreach ($existingMap as $imageId => $productImage) {
+                if (!in_array($imageId, $requestImageIds)) {
+                    // Удаляем физический файл
+                    if ($productImage->imageEntity) {
+                        try {
+                            $productImage->imageEntity->DeleteLocalFile();
+                        } catch (\Exception $e) {
+                            Yii::warning("Не удалось удалить файл изображения: " . $e->getMessage(), __METHOD__);
+                        }
+                        $productImage->imageEntity->delete();
+                    }
+                    $productImage->delete();
+                }
+            }
+            $transaction->commit();
+            $responseDto = $this->buildProductResponseDto($product);
+            Yii::$app->response->statusCode = 201;
+            return $responseDto;
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            Yii::error("Ошибка syncImages для товара #{$id}: " . $e->getMessage(), __METHOD__);
+            throw new ServerErrorHttpException('Не удалось обновить изображения товара');
+        }
+    }
+
+
+
+    /**
+     * Полная синхронизация категорий товара.
+     *
+     * Все существующие категории товара заменяются переданным массивом.
+     *
+     * @SWG\Post(
+     *     path="/admin/product/{id}/sync-categories",
+     *     tags={"admin / product controller"},
+     *     operationId="adminProductSyncCategories",
+     *     summary="Синхронизировать категории товара",
+     *     description="Удаляет существующие связи товара с категориями и создает новые связи на основании переданного массива categoryIds.",
+     *     produces={"application/json"},
+     *     consumes={"application/json"},
+     *
+     *     @SWG\Parameter(name="id", in="path", description="ID товара", required=true, type="integer", format="int32"),
+     *     @SWG\Parameter(name="body", in="body", description="Идентификаторы категорий.", required=true, @SWG\Schema(
+     *          type="object",
+     *          required={"categoryIds"},
+     *          @SWG\Property(
+     *               property="categoryIds",
+     *               type="array",
+     *               description="Массив идентификаторов категорий.",
+     *               @SWG\Items(
+     *                   type="integer",
+     *                   format="int32"
+     *               )
+     *           )
+     *       )
+     *     ),
+     *
+     *     @SWG\Response(response=201, description="Категории товара успешно синхронизированы", @SWG\Schema(ref="#/definitions/ProductResponseDto")),
+     *     @SWG\Response(response=404, description="Товар не найден"),
+     *     @SWG\Response(response=401, description="Пользователь не авторизован"),
+     *     @SWG\Response(response=403, description="Недостаточно прав")
+     * )
      */
     public function actionSyncCategories($id)
     {
-        $this->checkAccess('sync-categories');
+        $this->checkAccess();
         $product = Product::findOne($id);
         if (!$product) {
             throw new yii\web\NotFoundHttpException("Товар #{$id} не найден.");
@@ -262,114 +449,84 @@ class ProductController extends BaseApiAdminController
             $pc->category_id = (int) $catId;
             $pc->save();
         }
-        return new Ok201ResponseDto("Категории товара успешно обновлены", $product->toArray());
+        Yii::$app->response->statusCode = 201;
+        return $product->toArray();
     }
 
+
     /**
-     * POST /api/admin/products/{id}/images
-     * Добавление фотографии в галерею товара.
+     * Удаление товара.
      *
-     * @param int $id
-     * @return array
-     * @throws yii\web\NotFoundHttpException
+     * Вместе с товаром удаляются связанные файлы изображений.
+     *
+     *
+     * @SWG\Delete(
+     *     path="/admin/product/{id}",
+     *     tags={"admin / product controller"},
+     *     operationId="adminProductDelete",
+     *     summary="Удалить товар",
+     *     description="Удаляет товар и связанные с ним файлы изображений.",
+     *     produces={"application/json"},
+     *
+     *     @SWG\Parameter(name="id", in="path", description="ID товара", required=true, type="integer", format="int32"),
+     *     @SWG\Response(response=204, description="Товар успешно удален"),
+     *     @SWG\Response(response=404, description="Товар не найден"),
+     *     @SWG\Response(response=401, description="Пользователь не авторизован"),
+     *     @SWG\Response(response=403, description="Недостаточно прав"),
+     *     @SWG\Response(response=500, description="Ошибка при удалении товара")
+     * )
      */
-    public function actionAddImage($id)
+    public function actionDelete($id)
     {
-        $this->checkAccess('add-image');
+        $this->checkAccess();
+
         $product = Product::findOne($id);
         if (!$product) {
             throw new yii\web\NotFoundHttpException("Товар #{$id} не найден.");
         }
-
-        $img = new ProductImage();
-        $img->product_id = (int) $id;
-        $img->image_id = Yii::$app->request->getBodyParam('image_id');
-        $img->title = Yii::$app->request->getBodyParam('title', $product->title);
-        $img->is_main = Yii::$app->request->getBodyParam('is_main', false);
-
-        if (!$img->save()) {
-            Yii::error("Не удалось сохранить фотографии в галерею товара: " . json_encode($img->getErrors()), __METHOD__);
-            throw new \yii\web\ServerErrorHttpException('Не удалось сохранить фотографии в галерею товара');
+        $productImages = ProductImage::find()->where(['product_id' => $product->id])->all();
+        $imageIds = array_column($productImages, 'image_id');
+        $images = ImageEntity::find()->where(['id' => $imageIds])->all();
+        // Удаляем файлы изображений
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            foreach ($images as $key => $image) {
+                $image->DeleteLocalFile();
+            }
+            $transaction->commit();
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            Yii::error("Ошибка при удалении товара #{$id}: " . $e->getMessage(), __METHOD__);
+            throw new yii\web\ServerErrorHttpException('Ошибка при удалении товара и связанных данных.');
         }
-        return new Ok201ResponseDto("Фотография добавлена в галерею товара", $img->toArray());
+        Yii::$app->response->statusCode = 204;
+        return null;
     }
 
     /**
-     * Сохранение изображения из Base64 строки на диск.
+     * Формирует ProductResponseDto для товара со всеми актуальными связями.
      *
-     * @param string $base64Data
-     * @param string $title
-     * @return array|null ['path' => ..., 'url' => ...]
+     * @param Product $product
+     * @return ProductResponseDto
      */
-    private function saveImageFromBase64($base64Data, $title = 'image')
+    private function buildProductResponseDto(Product $product): ProductResponseDto
     {
-        if (empty($base64Data)) return null;
+        $product->refresh();
 
-        $extension = 'png';
-        if (preg_match('/^data:image\/(\w+);base64,/', $base64Data, $matches)) {
-            $extension = $matches[1];
-            if ($extension === 'jpeg') $extension = 'jpg';
-            $base64Data = substr($base64Data, strpos($base64Data, ',') + 1);
-        } else {
-            $extFromTitle = pathinfo($title, PATHINFO_EXTENSION);
-            if (!empty($extFromTitle)) {
-                $extension = strtolower($extFromTitle);
-            }
+        $productImages = ProductImage::find()
+            ->with('imageEntity')
+            ->where(['product_id' => $product->id])
+            ->all();
+        $productImageDtos = array_map(
+            fn(ProductImage $pi) => ProductImageResponseDto::create($pi),
+            $productImages
+        );
+
+        $categoryDtos = [];
+        foreach ($product->getCategories()->with('imageEntity')->all() as $category) {
+            $categoryDtos[] = CategoryResponseDto::create($category, $category->imageEntity);
         }
 
-        $decoded = base64_decode($base64Data);
-        if ($decoded === false) {
-            Yii::error('Ошибка декодирования base64', __METHOD__);
-            return null;
-        }
-
-        $uuid = Yii::$app->security->generateRandomString(32);
-        $fileName = $uuid . '.' . $extension;
-
-        $uploadPath = Yii::getAlias('@webroot/uploads/products/');
-        if (!is_dir($uploadPath)) {
-            if (!mkdir($uploadPath, 0777, true) && !is_dir($uploadPath)) {
-                Yii::error('Не удалось создать папку: ' . $uploadPath, __METHOD__);
-                return null;
-            }
-        }
-
-        $fullPath = $uploadPath . $fileName;
-        if (file_put_contents($fullPath, $decoded) === false) {
-            Yii::error('Не удалось записать файл: ' . $fullPath, __METHOD__);
-            return null;
-        }
-        $relativePath = '/uploads/products/' . $fileName;
-        return ['path' => $relativePath, 'url' => $relativePath ];
-    }
-
-    /**
-     * Удаляет файлы изображений, связанные с товаром.
-     */
-    private function deleteImageFiles(Product $product)
-    {
-        $uploadPath = Yii::getAlias('@webroot/uploads/products/');
-        foreach ($product->productImages as $image) {
-            if (!empty($image->imageEntity)) {
-                $this->deleteFile($uploadPath, $image->imageEntity->path);
-            }
-        }
-    }
-
-    /**
-     * Удаляет файл по пути.
-     */
-    private function deleteFile(string $uploadPath, string $filePath)
-    {
-        $fileName = basename($filePath);
-        $fullPath = $uploadPath . $fileName;
-
-        if (file_exists($fullPath) && is_file($fullPath)) {
-            if (!unlink($fullPath)) {
-                Yii::warning("Не удалось удалить файл: {$fullPath}", __METHOD__);
-            }
-        } else {
-            Yii::info("Файл не найден для удаления: {$fullPath}", __METHOD__);
-        }
+        return ProductResponseDto::createFromProduct($product, $productImageDtos, $categoryDtos);
     }
 }

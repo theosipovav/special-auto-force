@@ -23,6 +23,9 @@ use yii\db\ActiveRecord;
  * @property ProductCategory[] $productCategories
  * @property Category[] $categories
  * @property ProductImage[] $productImages
+ * 
+ * @property ImageEntity|null $mainImage      Главное изображение (ImageEntity)
+ * @property ImageEntity[] $otherImages      Остальные изображения (ImageEntity)
  */
 class Product extends ActiveRecord
 {
@@ -88,13 +91,13 @@ class Product extends ActiveRecord
                 }, $this->categories);
             },
             'images' => function () {
-                return array_map(function ($img) {
+                return array_map(function ($productImage) {
                     return [
-                        'product_id' => $img->product_id,
-                        'image_id' => $img->image_id,
-                        'is_main' => $img->is_main,
-                        'title' => $img->title,
-                        'url' => $img->imageEntity ? $img->imageEntity->url : null,
+                        'product_id' => $productImage->product_id,
+                        'image_id' => $productImage->image_id,
+                        'is_main' => $productImage->is_main,
+                        'title' => $productImage->title,
+                        'url' => $productImage->imageEntity ? $productImage->imageEntity->url : null,
                     ];
                 }, $this->productImages);
             },
@@ -108,6 +111,8 @@ class Product extends ActiveRecord
             'productCategories',
             'categories',
             'productImages',
+            'mainImage',
+            'otherImages',
         ];
     }
 
@@ -126,6 +131,40 @@ class Product extends ActiveRecord
     {
         return $this->hasMany(ProductImage::class, ['product_id' => 'id']);
     }
+
+    /**
+     * Связь с записью ProductImage, где is_main = 1.
+     */
+    public function getMainProductImage()
+    {
+        return $this->hasOne(ProductImage::class, ['product_id' => 'id'])->andWhere(['is_main' => 1]);
+    }
+    /**
+     * Возвращает главное изображение (ImageEntity).
+     * Использовать: $product->mainImage (если подгружено через with('mainImage')).
+     */
+    public function getMainImage()
+    {
+        return $this->hasOne(ImageEntity::class, ['id' => 'image_id'])->via('mainProductImage');
+    }
+
+    /**
+     * Связь с записями ProductImage, где is_main != 1 (т.е. 0 или null).
+     */
+    public function getOtherProductImages()
+    {
+        return $this->hasMany(ProductImage::class, ['product_id' => 'id'])->andWhere(['!=', 'is_main', 1]);
+    }
+
+    /**
+     * Возвращает массив остальных изображений (ImageEntity).
+     * Использовать: $product->otherImages (если подгружено через with('otherImages')).
+     */
+    public function getOtherImages()
+    {
+        return $this->hasMany(ImageEntity::class, ['id' => 'image_id'])->via('otherProductImages');
+    }
+
 
     /**
      * Преобразование дополнительной информации в структурированный массив характеристик

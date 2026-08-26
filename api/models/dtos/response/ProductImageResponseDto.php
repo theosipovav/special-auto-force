@@ -2,45 +2,21 @@
 
 namespace app\models\dtos\response;
 
+
+use app\models\entities\ProductImage;
+
 /**
  * DTO ответа с данными изображения товара.
  *
  * @SWG\Definition(
  *     definition="ProductImageResponseDto",
- *     required={
- *         "product_id",
- *         "image_id",
- *         "is_main",
- *         "title",
- *         "url"
- *     },
+ *     required={"product_id", "image_id", "is_main", "title", "url"},
  *
- *     @SWG\Property(
- *         property="product_id",
- *         type="integer",
- *         description="Идентификатор товара"
- *     ),
- *     @SWG\Property(
- *         property="image_id",
- *         type="integer",
- *         description="Идентификатор изображения"
- *     ),
- *     @SWG\Property(
- *         property="is_main",
- *         type="boolean",
- *         description="Является ли изображение главным"
- *     ),
- *     @SWG\Property(
- *         property="title",
- *         type="string",
- *         description="Название изображения"
- *     ),
- *     @SWG\Property(
- *         property="url",
- *         type="string",
- *         format="uri",
- *         description="URL изображения"
- *     )
+ *     @SWG\Property(property="product_id", type="integer", description="Идентификатор товара"),
+ *     @SWG\Property(property="image_id", type="integer", description="Идентификатор изображения"),
+ *     @SWG\Property(property="is_main", type="boolean", description="Является ли изображение главным"),
+ *     @SWG\Property(property="title", type="string", description="Название изображения"),
+ *     @SWG\Property(property="url", type="string", format="uri", description="URL изображения")
  * )
  */
 class ProductImageResponseDto
@@ -73,4 +49,32 @@ class ProductImageResponseDto
             'url' => $this->url,
         ];
     }
+
+
+    
+    /**
+     * Фабричный метод для создания DTO из модели ProductImage.
+     * 
+     * Модель ProductImage должна быть загружена с关联шей imageEntity 
+     * (например, через with(['productImages.imageEntity'])).
+     *
+     * @param ProductImage $productImage Модель связи товара с изображением
+     * @return self
+     */
+    public static function create(ProductImage $productImage): self
+    {
+        $url = '';
+        if ($productImage->imageEntity !== null) {
+            $url = $productImage->imageEntity->url ?? '';
+        }
+
+        return new self(
+            (int) $productImage->product_id,
+            (int) $productImage->image_id,
+            (bool) $productImage->is_main,
+            (string) $productImage->title,
+            (string) $url
+        );
+    }
+
 }

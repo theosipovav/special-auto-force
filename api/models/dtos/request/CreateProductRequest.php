@@ -6,7 +6,7 @@ use Yii;
 use yii\base\Model;
 
 /**
- * DTO для создания/обновления товара.
+ * DTO для создания продукции.
  *
  * @SWG\Definition(
  *     definition="CreateProductRequest",
@@ -19,21 +19,10 @@ use yii\base\Model;
  *     @SWG\Property(property="info", type="string", description="Дополнительная информация"),
  *     @SWG\Property(property="price", type="number", format="float", minimum=0, description="Цена товара"),
  *     @SWG\Property(property="inStock", type="boolean", description="Наличие товара на складе"),
- *     @SWG\Property(property="ordersCount", type="integer", description="Количество заказов"),
  *     @SWG\Property(property="manufacturer", type="string", maxLength=255, description="Производитель"),
  *     @SWG\Property(property="country", type="string", maxLength=255, description="Страна производства"),
- *     @SWG\Property(
- *         property="categoryIds",
- *         type="array",
- *         description="Идентификаторы категорий",
- *         @SWG\Items(type="integer")
- *     ),
- *     @SWG\Property(
- *         property="images",
- *         type="array",
- *         description="Массив изображений товара (одно из них должно быть с isMain=true)",
- *         @SWG\Items(ref="#/definitions/FormFileImageDto")
- *     )
+ *     @SWG\Property(property="categoryIds", type="array", description="Идентификаторы категорий", @SWG\Items(type="integer")),
+ *     @SWG\Property(property="images", type="array", description="Массив изображений товара (одно из них должно быть с isMain=true)", @SWG\Items(ref="#/definitions/FormFileImageDto"))
  * )
  */
 class CreateProductRequest extends Model
@@ -46,7 +35,6 @@ class CreateProductRequest extends Model
     
     public ?float $price = null;
     public bool $inStock = false;
-    public int $ordersCount = 0;
     
     public string $manufacturer = '';
     public string $country = '';
@@ -67,7 +55,6 @@ class CreateProductRequest extends Model
             [['shortDescription', 'longDescription', 'info'], 'string'],
             [['price'], 'number', 'min' => 0],
             [['inStock'], 'boolean'],
-            [['ordersCount'], 'integer'],
             [['categoryIds'], 'each', 'rule' => ['integer']],
             [['images'], 'validateImages'],
         ];

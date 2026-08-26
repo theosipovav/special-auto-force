@@ -22,7 +22,19 @@ abstract class BaseApiAdminController extends BaseApiController
         $behaviors = parent::behaviors();
 
         // Применяем аутентификацию ко всем действиям (пустой массив = все)
-        $behaviors += $this->applyBearerAuth([]);
+        // $behaviors += $this->applyBearerAuth([]);
+
+        $behaviors['authenticator'] = [
+        'class' => \yii\filters\auth\CompositeAuth::class,
+        'except' => ['options'], // preflight CORS без токена
+        'authMethods' => [
+            \yii\filters\auth\HttpBearerAuth::class,
+            [
+                'class' => \yii\filters\auth\QueryParamAuth::class,
+                'tokenParam' => 'access_token',
+            ],
+        ],
+    ];
 
         return $behaviors;
     }
@@ -31,25 +43,18 @@ abstract class BaseApiAdminController extends BaseApiController
      * Проверка прав доступа.
      * Доступ разрешён только ролям admin / Администратор / manager / Менеджер.
      */
-    public function checkAccess($action, $model = null, $params = [])
+    public function checkAccess($action = null, $model = null, $params = [])
     {
         /** @var User|null $currentUser */
         $currentUser = Yii::$app->user->identity;
-
         $allowedRoles = ['admin', 'manager'];
-        $hasAccess = false;
-
         if ($currentUser) {
             foreach ($allowedRoles as $role) {
                 if ($currentUser->hasRole($role)) {
-                    $hasAccess = true;
-                    break;
+                    return;
                 }
             }
         }
-
-        if (!$hasAccess) {
-            throw new ForbiddenHttpException('Доступ разрешен только администраторам и менеджерам.');
-        }
+        throw new ForbiddenHttpException('Доступ разрешен только администраторам и менеджерам.');
     }
 }
