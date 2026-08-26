@@ -104,7 +104,7 @@ class m260820_112032_init extends Migration
         $this->addForeignKey('fk-product_image-product_id', '{{%product_image}}', 'product_id', '{{%product}}', 'id', 'CASCADE', 'CASCADE');
         $this->addForeignKey('fk-product_image-image_id', '{{%product_image}}', 'image_id', '{{%image}}', 'id', 'CASCADE', 'CASCADE');
 
-        // 9. Таблица "request" (CustomerRequest)
+        // 9. Таблица "request" (CustomerRequestEntity)
         $this->createTable('{{%request}}', [
             'id' => $this->primaryKey(),
             'product_id' => $this->integer(),

@@ -6,18 +6,18 @@ use Yii;
 use yii\filters\auth\HttpBearerAuth;
 use yii\web\ForbiddenHttpException;
 use yii\data\ActiveDataProvider;
-use app\models\entities\CustomerRequest;
+use app\models\entities\CustomerRequestEntity;
 use app\models\entities\ProductEntity;
 use app\models\entities\ParameterEntity;
 use app\models\entities\UserEntity;
 use app\controllers\api\BaseApiController;
 
 /**
- * REST API контроллер заявок клиентов (CustomerRequest)
+ * REST API контроллер заявок клиентов (CustomerRequestEntity)
  */
 class RequestController extends BaseApiController
 {
-    public $modelClass = CustomerRequest::class;
+    public $modelClass = CustomerRequestEntity::class;
 
     public function behaviors()
     {
@@ -38,7 +38,7 @@ class RequestController extends BaseApiController
 
         // Custom provider with status filter
         $actions['index']['prepareDataProvider'] = function () {
-            $query = CustomerRequest::find()->with('product');
+            $query = CustomerRequestEntity::find()->with('product');
 
             $status = Yii::$app->request->get('status');
             if (!empty($status)) {
@@ -63,7 +63,7 @@ class RequestController extends BaseApiController
             'checkAccess' => [$this, 'checkAccess'],
             'scenario' => $this->createScenario,
             'afterSave' => function ($model) {
-                /** @var CustomerRequest $model */
+                /** @var CustomerRequestEntity $model */
                 if ($model->product_id) {
                     ProductEntity::updateAllCounters(['orders_count' => 1], ['id' => $model->product_id]);
                 }
