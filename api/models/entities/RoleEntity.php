@@ -6,10 +6,10 @@ use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * Модель сущности "Роль" (Role).
+ * Модель сущности "Роль" (RoleEntity).
  *
  * @SWG\Definition(
- *     definition="Role",
+ *     definition="RoleEntity",
  *     required={"id", "title"},
  *
  *     @SWG\Property(
@@ -29,7 +29,7 @@ use yii\db\ActiveRecord;
  *         type="array",
  *         description="Пользователи, которым назначена роль. Возвращается при expand=users.",
  *         @SWG\Items(
- *             ref="#/definitions/User"
+ *             ref="#/definitions/UserEntity"
  *         )
  *     ),
  *     @SWG\Property(
@@ -40,7 +40,7 @@ use yii\db\ActiveRecord;
  *     )
  * )
  */
-class Role extends ActiveRecord
+class RoleEntity extends ActiveRecord
 {
     public static function tableName()
     {
@@ -84,12 +84,12 @@ class Role extends ActiveRecord
 
     public function getUserRoles()
     {
-        return $this->hasMany(UserRole::class, ['role_id' => 'id']);
+        return $this->hasMany(UserRoleEntity::class, ['role_id' => 'id']);
     }
 
     public function getUsers()
     {
-        return $this->hasMany(User::class, ['id' => 'user_id'])
+        return $this->hasMany(UserEntity::class, ['id' => 'user_id'])
             ->via('userRoles');
     }
 }

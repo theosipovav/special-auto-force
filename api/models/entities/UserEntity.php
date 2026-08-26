@@ -9,10 +9,10 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
 /**
- * Модель сущности "Пользователь" (User)
+ * Модель сущности "Пользователь" (UserEntity)
  *
  * @SWG\Definition(
- *     definition="User",
+ *     definition="UserEntity",
  *     type="object",
  *     description="Модель пользователя (полное представление)",
  *     required={"id", "userName", "email", "phone", "name", "surname", "status", "datOfRegistration"}
@@ -38,10 +38,10 @@ use Firebase\JWT\Key;
  * @property int $status Статус аккаунта (10 = активен, 0 = заблокирован)
  *
  * @property ImageEntity|null $imageEntity
- * @property UserRole[] $userRoles
- * @property Role[] $roles
+ * @property UserRoleEntity[] $userRoles
+ * @property RoleEntity[] $roles
  */
-class User extends ActiveRecord implements IdentityInterface
+class UserEntity extends ActiveRecord implements IdentityInterface
 {
     const STATUS_DELETED = 0;
     const STATUS_INACTIVE = 9;
@@ -183,7 +183,7 @@ class User extends ActiveRecord implements IdentityInterface
      *     property="roles",
      *     type="array",
      *     description="Назначенные роли",
-     *     @SWG\Items(ref="#/definitions/UserRole")
+     *     @SWG\Items(ref="#/definitions/UserRoleEntity")
      * )
      */
     public function fields()
@@ -242,12 +242,12 @@ class User extends ActiveRecord implements IdentityInterface
 
     public function getUserRoles()
     {
-        return $this->hasMany(UserRole::class, ['user_id' => 'id']);
+        return $this->hasMany(UserRoleEntity::class, ['user_id' => 'id']);
     }
 
     public function getRoles()
     {
-        return $this->hasMany(Role::class, ['id' => 'role_id'])
+        return $this->hasMany(RoleEntity::class, ['id' => 'role_id'])
             ->via('userRoles');
     }
 
@@ -269,9 +269,9 @@ class User extends ActiveRecord implements IdentityInterface
      */
     public function assignRole(int $roleId): bool
     {
-        $existing = UserRole::findOne(['user_id' => $this->id, 'role_id' => $roleId]);
+        $existing = UserRoleEntity::findOne(['user_id' => $this->id, 'role_id' => $roleId]);
         if (!$existing) {
-            $ur = new UserRole();
+            $ur = new UserRoleEntity();
             $ur->user_id = $this->id;
             $ur->role_id = $roleId;
             return $ur->save();
@@ -284,7 +284,7 @@ class User extends ActiveRecord implements IdentityInterface
      */
     public function revokeRole(int $roleId): bool
     {
-        $existing = UserRole::findOne(['user_id' => $this->id, 'role_id' => $roleId]);
+        $existing = UserRoleEntity::findOne(['user_id' => $this->id, 'role_id' => $roleId]);
         if ($existing) {
             return (bool) $existing->delete();
         }

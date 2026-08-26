@@ -6,7 +6,7 @@ use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * Модель сущности "Страница" (Page)
+ * Модель сущности "Страница"
  *
  * @property int $id Id
  * @property string $title Заголовок (Title)
@@ -14,7 +14,7 @@ use yii\db\ActiveRecord;
  * @property string|null $description Описание (Description)
  * @property string $dateCreate Дата создания (DateCreate)
  */
-class Page extends ActiveRecord
+class PageEntity extends ActiveRecord
 {
     public static function tableName()
     {

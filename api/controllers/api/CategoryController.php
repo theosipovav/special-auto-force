@@ -7,15 +7,15 @@ use yii\filters\auth\HttpBearerAuth;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\data\ActiveDataProvider;
-use app\models\entities\Category;
-use app\models\entities\User;
+use app\models\entities\CategoryEntity;
+use app\models\entities\UserEntity;
 
 /**
- * REST API контроллер категорий (Category)
+ * REST API контроллер категорий (CategoryEntity)
  */
 class CategoryController extends BaseApiController
 {
-    public $modelClass = Category::class;
+    public $modelClass = CategoryEntity::class;
 
     public function behaviors()
     {
@@ -37,7 +37,7 @@ class CategoryController extends BaseApiController
         // Default list pagination & sorting
         $actions['index']['prepareDataProvider'] = function () {
             return new ActiveDataProvider([
-                'query' => Category::find(),
+                'query' => CategoryEntity::find(),
                 'pagination' => [
                     'pageSize' => 50,
                 ],
@@ -56,7 +56,7 @@ class CategoryController extends BaseApiController
      */
     public function actionProducts($id)
     {
-        $category = Category::findOne($id);
+        $category = CategoryEntity::findOne($id);
         if (!$category) {
             throw new NotFoundHttpException("Категория #{$id} не найдена.");
         }
@@ -93,7 +93,7 @@ class CategoryController extends BaseApiController
     {
         if (in_array($action, ['create', 'update', 'delete'])) {
 
-            /** @var User $currentUser */
+            /** @var UserEntity $currentUser */
             $currentUser = Yii::$app->user->identity;
             if (!$currentUser || (!$currentUser->hasRole('admin') && !$currentUser->hasRole('Администратор'))) {
                 throw new ForbiddenHttpException('Доступ разрешен только администраторам.');

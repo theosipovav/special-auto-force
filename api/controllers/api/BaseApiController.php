@@ -29,9 +29,9 @@ abstract class BaseApiController extends ActiveController
                 'Access-Control-Allow-Credentials' => null,
                 'Access-Control-Max-Age' => 86400,
                 'Access-Control-Expose-Headers' => [
-                    'X-Pagination-Current-Page',
-                    'X-Pagination-Page-Count',
-                    'X-Pagination-Per-Page',
+                    'X-Pagination-Current-PageEntity',
+                    'X-Pagination-PageEntity-Count',
+                    'X-Pagination-Per-PageEntity',
                     'X-Pagination-Total-Count',
                 ],
             ],

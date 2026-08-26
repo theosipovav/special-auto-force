@@ -6,7 +6,7 @@ use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * Модель сущности "Категории" (Category)
+ * Модель сущности "Категории"
  *
  * @property int $id Id
  * @property string $title Название (Title)
@@ -14,10 +14,10 @@ use yii\db\ActiveRecord;
  * @property int|null $image_id ID изображения
  *
  * @property ImageEntity|null $imageEntity
- * @property ProductCategory[] $productCategories
- * @property Product[] $products
+ * @property ProductCategoryEntity[] $productCategories
+ * @property ProductEntity[] $products
  */
-class Category extends ActiveRecord
+class CategoryEntity extends ActiveRecord
 {
     public static function tableName()
     {
@@ -76,12 +76,12 @@ class Category extends ActiveRecord
 
     public function getProductCategories()
     {
-        return $this->hasMany(ProductCategory::class, ['category_id' => 'id']);
+        return $this->hasMany(ProductCategoryEntity::class, ['category_id' => 'id']);
     }
 
     public function getProducts()
     {
-        return $this->hasMany(Product::class, ['id' => 'product_id'])
+        return $this->hasMany(ProductEntity::class, ['id' => 'product_id'])
             ->via('productCategories');
     }
 }

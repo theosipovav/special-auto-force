@@ -198,7 +198,7 @@ class m260820_112032_init extends Migration
             'name' => 'Администратор',
             'surname' => 'Главный',
             'date_of_registration' => date('Y-m-d H:i:s'),
-            'status' => 10, // \app\models\User::STATUS_ACTIVE
+            'status' => 10, // \app\models\UserEntity::STATUS_ACTIVE
             'auth_key' => Yii::$app->security->generateRandomString(),
         ]);
 

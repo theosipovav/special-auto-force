@@ -5,15 +5,15 @@ namespace app\controllers\api;
 use Yii;
 use yii\filters\auth\HttpBearerAuth;
 use yii\web\ForbiddenHttpException;
-use app\models\entities\Parameter;
-use app\models\entities\User;
+use app\models\entities\ParameterEntity;
+use app\models\entities\UserEntity;
 
 /**
- * REST API контроллер параметров сайта (Parameter)
+ * REST API контроллер параметров сайта (ParameterEntity)
  */
 class ParameterController extends BaseApiController
 {
-    public $modelClass = Parameter::class;
+    public $modelClass = ParameterEntity::class;
 
     public function behaviors()
     {
@@ -36,14 +36,14 @@ class ParameterController extends BaseApiController
     {
         return [
             'success' => true,
-            'data' => Parameter::getMap(),
+            'data' => ParameterEntity::getMap(),
         ];
     }
 
     public function checkAccess($action, $model = null, $params = [])
     {
         if (in_array($action, ['create', 'update', 'delete'])) {
-            /** @var User $currentUser */
+            /** @var UserEntity $currentUser */
             $currentUser = Yii::$app->user->identity;
             if (!$currentUser || (!$currentUser->hasRole('admin') && !$currentUser->hasRole('Администратор'))) {
                 throw new ForbiddenHttpException('Доступ разрешен только администраторам.');

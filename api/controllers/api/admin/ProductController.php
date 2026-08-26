@@ -4,9 +4,9 @@ namespace app\controllers\api\admin;
 
 use Yii;
 use yii\data\ActiveDataProvider;
-use app\models\entities\Product;
-use app\models\entities\ProductCategory;
-use app\models\entities\ProductImage;
+use app\models\entities\ProductEntity;
+use app\models\entities\ProductCategoryEntity;
+use app\models\entities\ProductImageEntity;
 use app\models\entities\ImageEntity;
 use app\models\dtos\request\CreateProductRequest;
 use app\models\dtos\request\UpdateProductRequest;
@@ -27,7 +27,7 @@ use yii\web\ServerErrorHttpException;
  */
 class ProductController extends BaseApiAdminController
 {
-    public $modelClass = Product::class;
+    public $modelClass = ProductEntity::class;
 
 
     public function actions()
@@ -44,7 +44,7 @@ class ProductController extends BaseApiAdminController
 
         // Кастомный провайдер для списка
         $actions['index']['prepareDataProvider'] = function () {
-            $query = Product::find()->with(['categories', 'productImages.imageEntity']);
+            $query = ProductEntity::find()->with(['categories', 'productImages.imageEntity']);
 
             // Фильтр по категории
             $categoryId = Yii::$app->request->get('categoryId');
@@ -132,7 +132,7 @@ class ProductController extends BaseApiAdminController
         $transaction = Yii::$app->db->beginTransaction();
         try {
             // Создаем продукцию
-            $product = new Product();
+            $product = new ProductEntity();
             $product->title = $request->title;
             $product->article = $request->article;
             $product->short_description = $request->shortDescription;
@@ -162,7 +162,7 @@ class ProductController extends BaseApiAdminController
                 }
 
                 // Создаем связь продукции с изображениями
-                $productImage = new ProductImage();
+                $productImage = new ProductImageEntity();
                 $productImage->product_id = $product->id;
                 $productImage->image_id = $image->id;
                 $productImage->title = $image->title;
@@ -216,7 +216,7 @@ class ProductController extends BaseApiAdminController
     public function actionUpdate(int $id)
     {
         $this->checkAccess();
-        $product = Product::findOne($id);
+        $product = ProductEntity::findOne($id);
         if (!$product) {
             throw new \yii\web\NotFoundHttpException("Товар #{$id} не найден.");
         }
@@ -271,7 +271,7 @@ class ProductController extends BaseApiAdminController
     {
         $this->checkAccess();
 
-        $product = Product::findOne($id);
+        $product = ProductEntity::findOne($id);
         if (!$product) {
             throw new \yii\web\NotFoundHttpException("Товар #{$id} не найден.");
         }
@@ -284,7 +284,7 @@ class ProductController extends BaseApiAdminController
         $transaction = Yii::$app->db->beginTransaction();
         try {
             // 1. Получаем существующие связи "товар-изображение"
-            $existingProductImages = ProductImage::findAll(['product_id' => $id]);
+            $existingProductImages = ProductImageEntity::findAll(['product_id' => $id]);
             $existingMap = [];
             foreach ($existingProductImages as $pi) {
                 $existingMap[$pi->image_id] = $pi;
@@ -331,7 +331,7 @@ class ProductController extends BaseApiAdminController
                     }
 
                     if (!$productImage->save()) {
-                        throw new \Exception('Ошибка обновления ProductImage: ' . json_encode($productImage->getErrors()));
+                        throw new \Exception('Ошибка обновления ProductImageEntity: ' . json_encode($productImage->getErrors()));
                     }
                     $requestImageIds[] = $dto->image_id;
                 } else {
@@ -346,14 +346,14 @@ class ProductController extends BaseApiAdminController
                         throw new \Exception('Ошибка сохранения ImageEntity: ' . json_encode($image->getErrors()));
                     }
 
-                    $productImage = new ProductImage();
+                    $productImage = new ProductImageEntity();
                     $productImage->product_id = $id;
                     $productImage->image_id = $image->id;
                     $productImage->title = !empty($dto->title) ? $dto->title : $image->title;
                     $productImage->is_main = $shouldBeMain;
 
                     if (!$productImage->save()) {
-                        throw new \Exception('Ошибка создания ProductImage: ' . json_encode($productImage->getErrors()));
+                        throw new \Exception('Ошибка создания ProductImageEntity: ' . json_encode($productImage->getErrors()));
                     }
                     $requestImageIds[] = $image->id;
                 }
@@ -426,7 +426,7 @@ class ProductController extends BaseApiAdminController
     public function actionSyncCategories($id)
     {
         $this->checkAccess();
-        $product = Product::findOne($id);
+        $product = ProductEntity::findOne($id);
         if (!$product) {
             throw new yii\web\NotFoundHttpException("Товар #{$id} не найден.");
         }
@@ -437,11 +437,11 @@ class ProductController extends BaseApiAdminController
         }
 
         // Удаляем старые связи
-        ProductCategory::deleteAll(['product_id' => $id]);
+        ProductCategoryEntity::deleteAll(['product_id' => $id]);
 
         // Создаём новые
         foreach ($categoryIds as $catId) {
-            $pc = new ProductCategory();
+            $pc = new ProductCategoryEntity();
             $pc->product_id = (int) $id;
             $pc->category_id = (int) $catId;
             $pc->save();
@@ -477,11 +477,11 @@ class ProductController extends BaseApiAdminController
     {
         $this->checkAccess();
 
-        $product = Product::findOne($id);
+        $product = ProductEntity::findOne($id);
         if (!$product) {
             throw new yii\web\NotFoundHttpException("Товар #{$id} не найден.");
         }
-        $productImages = ProductImage::find()->where(['product_id' => $product->id])->all();
+        $productImages = ProductImageEntity::find()->where(['product_id' => $product->id])->all();
         $imageIds = array_column($productImages, 'image_id');
         $images = ImageEntity::find()->where(['id' => $imageIds])->all();
         // Удаляем файлы изображений
@@ -503,19 +503,19 @@ class ProductController extends BaseApiAdminController
     /**
      * Формирует ProductResponseDto для товара со всеми актуальными связями.
      *
-     * @param Product $product
+     * @param ProductEntity $product
      * @return ProductResponseDto
      */
-    private function buildProductResponseDto(Product $product): ProductResponseDto
+    private function buildProductResponseDto(ProductEntity $product): ProductResponseDto
     {
         $product->refresh();
 
-        $productImages = ProductImage::find()
+        $productImages = ProductImageEntity::find()
             ->with('imageEntity')
             ->where(['product_id' => $product->id])
             ->all();
         $productImageDtos = array_map(
-            fn(ProductImage $pi) => ProductImageResponseDto::create($pi),
+            fn(ProductImageEntity $pi) => ProductImageResponseDto::create($pi),
             $productImages
         );
 

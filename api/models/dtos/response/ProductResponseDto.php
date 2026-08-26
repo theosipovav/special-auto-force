@@ -2,7 +2,7 @@
 
 namespace app\models\dtos\response;
 
-use app\models\entities\Product;
+use app\models\entities\ProductEntity;
 
 /**
  * DTO ответа с данными товара.
@@ -121,13 +121,13 @@ class ProductResponseDto
 
 
     /**
-     * Фабричный метод для создания DTO из модели Product и подготовленных данных.
+     * Фабричный метод для создания DTO из модели ProductEntity и подготовленных данных.
      *
-     * @param Product $product Модель товара
-     * @param array $images Все связанные изображения (ProductImageResponseDto)
+     * @param ProductEntity $product Модель товара
+     * @param array $productImageDtos Все связанные изображения (ProductImageResponseDto)
      * @return ProductResponseDto
      */
-    public static function createFromProduct(Product $product, array $productImageDtos, array $categoryDtos): self
+    public static function createFromProduct(ProductEntity $product, array $productImageDtos, array $categoryDtos): self
     {
         $mainImageUrl = null;
         $otherImageUrls = [];

@@ -5,7 +5,7 @@ namespace app\controllers\api\admin;
 use Yii;
 use app\controllers\api\BaseApiController;
 use yii\web\ForbiddenHttpException;
-use app\models\entities\User;
+use app\models\entities\UserEntity;
 
 /**
  * Базовый админский абстрактный REST API контроллер 
@@ -45,7 +45,7 @@ abstract class BaseApiAdminController extends BaseApiController
      */
     public function checkAccess($action = null, $model = null, $params = [])
     {
-        /** @var User|null $currentUser */
+        /** @var UserEntity|null $currentUser */
         $currentUser = Yii::$app->user->identity;
         $allowedRoles = ['admin', 'manager'];
         if ($currentUser) {

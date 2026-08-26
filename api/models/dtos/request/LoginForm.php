@@ -4,7 +4,7 @@ namespace app\models\dtos\request;
 
 use Yii;
 use yii\base\Model;
-use app\models\entities\User;
+use app\models\entities\UserEntity;
 
 /**
  * Форма авторизации.
@@ -53,7 +53,7 @@ class LoginForm extends Model
     public function validatePassword($attribute, $params)
     {
         if (!$this->hasErrors()) {
-            /** @var User $user */
+            /** @var UserEntity $user */
             $user = $this->getUser();
             if (!$user || !$user->validatePassword($this->password)) {
                 $this->addError($attribute, 'Неверный логин или пароль.');
@@ -64,7 +64,7 @@ class LoginForm extends Model
     public function getUser()
     {
         if ($this->_user === false) {
-            $this->_user = User::find()
+            $this->_user = UserEntity::find()
                 ->where(['username' => $this->username])
                 ->orWhere(['email' => $this->username])
                 ->one();
@@ -77,7 +77,7 @@ class LoginForm extends Model
     {
         if ($this->validate()) {
 
-            /** @var User $user */
+            /** @var UserEntity $user */
             $user = $this->getUser();
             $token = $user->generateAccessToken();
 

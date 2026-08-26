@@ -6,7 +6,7 @@ use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * Модель сущности "Параметры сайта" (Parameter)
+ * Модель сущности "Параметры сайта"
  *
  * @property int $id Id
  * @property string $title Название (Title)
@@ -15,9 +15,9 @@ use yii\db\ActiveRecord;
  * @property string|null $group Группа параметров
  * @property int|null $pageId Идентификатор страницы
  *
- * @property Page|null $page
+ * @property PageEntity|null $page
  */
-class Parameter extends ActiveRecord
+class ParameterEntity extends ActiveRecord
 {
     public static function tableName()
     {
@@ -33,7 +33,7 @@ class Parameter extends ActiveRecord
             [['code'], 'string', 'max' => 64],
             [['group'], 'string', 'max' => 64],
             [['pageId'], 'integer'],
-            [['pageId'], 'exist', 'skipOnError' => true, 'targetClass' => Page::class, 'targetAttribute' => ['pageId' => 'id']],
+            [['pageId'], 'exist', 'skipOnError' => true, 'targetClass' => PageEntity::class, 'targetAttribute' => ['pageId' => 'id']],
         ];
     }
 
@@ -62,13 +62,13 @@ class Parameter extends ActiveRecord
     }
 
     /**
-     * Gets query for [[Page]].
+     * Gets query for [[PageEntity]].
      *
      * @return \yii\db\ActiveQuery
      */
     public function getPage()
     {
-        return $this->hasOne(Page::class, ['id' => 'pageId']);
+        return $this->hasOne(PageEntity::class, ['id' => 'pageId']);
     }
 
     /**

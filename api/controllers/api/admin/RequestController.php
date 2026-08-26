@@ -7,9 +7,9 @@ use yii\filters\auth\HttpBearerAuth;
 use yii\web\ForbiddenHttpException;
 use yii\data\ActiveDataProvider;
 use app\models\entities\CustomerRequest;
-use app\models\entities\Product;
-use app\models\entities\Parameter;
-use app\models\entities\User;
+use app\models\entities\ProductEntity;
+use app\models\entities\ParameterEntity;
+use app\models\entities\UserEntity;
 use app\controllers\api\BaseApiController;
 
 /**
@@ -65,12 +65,12 @@ class RequestController extends BaseApiController
             'afterSave' => function ($model) {
                 /** @var CustomerRequest $model */
                 if ($model->product_id) {
-                    Product::updateAllCounters(['orders_count' => 1], ['id' => $model->product_id]);
+                    ProductEntity::updateAllCounters(['orders_count' => 1], ['id' => $model->product_id]);
                 }
 
                 // Email notification to administrator
                 try {
-                    $adminEmail = Parameter::getValue('site_order_email', Yii::$app->params['adminEmail'] ?? 'admin@specavtosila.ru');
+                    $adminEmail = ParameterEntity::getValue('site_order_email', Yii::$app->params['adminEmail'] ?? 'admin@specavtosila.ru');
                     Yii::$app->mailer->compose()
                         ->setFrom([Yii::$app->params['senderEmail'] ?? 'noreply@specavtosila.ru' => 'СПЕЦАВТОСИЛА'])
                         ->setTo($adminEmail)
@@ -89,7 +89,7 @@ class RequestController extends BaseApiController
     public function checkAccess($action, $model = null, $params = [])
     {
         if (in_array($action, ['index', 'view', 'update', 'delete'])) {
-            /** @var User $currentUser */
+            /** @var UserEntity $currentUser */
             $currentUser = Yii::$app->user->identity;
             if (!$currentUser) {
                 throw new ForbiddenHttpException('Требуется авторизация.');

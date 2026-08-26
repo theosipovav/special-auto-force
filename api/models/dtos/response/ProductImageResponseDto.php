@@ -3,7 +3,7 @@
 namespace app\models\dtos\response;
 
 
-use app\models\entities\ProductImage;
+use app\models\entities\ProductImageEntity;
 
 /**
  * DTO ответа с данными изображения товара.
@@ -53,15 +53,15 @@ class ProductImageResponseDto
 
     
     /**
-     * Фабричный метод для создания DTO из модели ProductImage.
+     * Фабричный метод для создания DTO из модели ProductImageEntity.
      * 
-     * Модель ProductImage должна быть загружена с关联шей imageEntity 
+     * Модель ProductImageEntity должна быть загружена с关联шей imageEntity 
      * (например, через with(['productImages.imageEntity'])).
      *
-     * @param ProductImage $productImage Модель связи товара с изображением
+     * @param ProductImageEntity $productImage Модель связи товара с изображением
      * @return self
      */
-    public static function create(ProductImage $productImage): self
+    public static function create(ProductImageEntity $productImage): self
     {
         $url = '';
         if ($productImage->imageEntity !== null) {

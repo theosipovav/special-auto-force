@@ -6,17 +6,17 @@ use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * Модель сущности "Связь между товарами и фотографиями" (ProductImage)
+ * Модель сущности "Связь между товарами и фотографиями"
  *
  * @property int $product_id Идентификатор продукта
  * @property int $image_id Идентификатор изображения
  * @property bool $is_main Главное фото
  * @property string $title Название
  *
- * @property Product $product
+ * @property ProductEntity $product
  * @property ImageEntity|null $imageEntity
  */
-class ProductImage extends ActiveRecord
+class ProductImageEntity extends ActiveRecord
 {
     public static function tableName()
     {
@@ -31,7 +31,7 @@ class ProductImage extends ActiveRecord
             [['is_main'], 'boolean'],
             [['title'], 'string', 'max' => 255],
             [['product_id', 'image_id'], 'unique', 'targetAttribute' => ['product_id', 'image_id'], 'message' => 'Такая связка продукта и изображения уже существует'],
-            [['product_id'], 'exist', 'skipOnError' => true, 'targetClass' => Product::class, 'targetAttribute' => ['product_id' => 'id']],
+            [['product_id'], 'exist', 'skipOnError' => true, 'targetClass' => ProductEntity::class, 'targetAttribute' => ['product_id' => 'id']],
             [['image_id'], 'exist', 'skipOnError' => true, 'targetClass' => ImageEntity::class, 'targetAttribute' => ['image_id' => 'id']],
         ];
     }
@@ -66,7 +66,7 @@ class ProductImage extends ActiveRecord
 
     public function getProduct()
     {
-        return $this->hasOne(Product::class, ['id' => 'product_id']);
+        return $this->hasOne(ProductEntity::class, ['id' => 'product_id']);
     }
 
     public function getImageEntity()

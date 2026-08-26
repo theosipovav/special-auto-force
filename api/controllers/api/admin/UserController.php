@@ -7,17 +7,17 @@ use yii\filters\auth\HttpBearerAuth;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\data\ActiveDataProvider;
-use app\models\entities\User;
-use app\models\entities\Role;
+use app\models\entities\UserEntity;
+use app\models\entities\RoleEntity;
 use app\controllers\api\BaseApiController;
 
 /**
- * REST API контроллер пользователей (User)
+ * REST API контроллер пользователей (UserEntity)
  * 
  */
 class UserController extends BaseApiController
 {
-    public $modelClass = User::class;
+    public $modelClass = UserEntity::class;
 
     /**
      * @SWG\Get(
@@ -46,7 +46,7 @@ class UserController extends BaseApiController
      *     produces={"application/json"},
      *     consumes={"application/json"},
      *     security={{"bearerAuth":{}}},
-     *     @SWG\Parameter(name="body", in="body", required=true, @SWG\Schema(ref="#/definitions/User")),
+     *     @SWG\Parameter(name="body", in="body", required=true, @SWG\Schema(ref="#/definitions/UserEntity")),
      *     @SWG\Response(response=201, description="Пользователь создан"),
      *     @SWG\Response(response=403, description="Доступ запрещен"),
      *     @SWG\Response(response=422, description="Ошибка валидации")
@@ -59,7 +59,7 @@ class UserController extends BaseApiController
      *     description="Возвращает данные пользователя по идентификатору",
      *     produces={"application/json"},
      *     @SWG\Parameter(name="id", in="path", type="integer", required=true, description="ID пользователя"),
-     *     @SWG\Response(response=200, description="Данные пользователя", @SWG\Schema(ref="#/definitions/User")),
+     *     @SWG\Response(response=200, description="Данные пользователя", @SWG\Schema(ref="#/definitions/UserEntity")),
      *     @SWG\Response(response=404, description="Пользователь не найден")
      * )
      *
@@ -72,7 +72,7 @@ class UserController extends BaseApiController
      *     consumes={"application/json"},
      *     security={{"bearerAuth":{}}},
      *     @SWG\Parameter(name="id", in="path", type="integer", required=true, description="ID пользователя"),
-     *     @SWG\Parameter(name="body", in="body", required=true, @SWG\Schema(ref="#/definitions/User")),
+     *     @SWG\Parameter(name="body", in="body", required=true, @SWG\Schema(ref="#/definitions/UserEntity")),
      *     @SWG\Response(response=200, description="Пользователь обновлен"),
      *     @SWG\Response(response=403, description="Доступ запрещен"),
      *     @SWG\Response(response=404, description="Пользователь не найден"),
@@ -88,7 +88,7 @@ class UserController extends BaseApiController
      *     consumes={"application/json"},
      *     security={{"bearerAuth":{}}},
      *     @SWG\Parameter(name="id", in="path", type="integer", required=true, description="ID пользователя"),
-     *     @SWG\Parameter(name="body", in="body", required=true, @SWG\Schema(ref="#/definitions/User")),
+     *     @SWG\Parameter(name="body", in="body", required=true, @SWG\Schema(ref="#/definitions/UserEntity")),
      *     @SWG\Response(response=200, description="Пользователь обновлен"),
      *     @SWG\Response(response=403, description="Доступ запрещен"),
      *     @SWG\Response(response=404, description="Пользователь не найден"),
@@ -128,7 +128,7 @@ class UserController extends BaseApiController
 
         // Custom prepareDataProvider for filtering and searching users
         $actions['index']['prepareDataProvider'] = function ($action) {
-            $query = User::find();
+            $query = UserEntity::find();
 
             $role = Yii::$app->request->get('role');
             if (!empty($role)) {
@@ -188,7 +188,7 @@ class UserController extends BaseApiController
      */
     public function actionAssignRole($id)
     {
-        $user = User::findOne($id);
+        $user = UserEntity::findOne($id);
         if (!$user) {
             throw new NotFoundHttpException("Пользователь #{$id} не найден.");
         }
@@ -197,7 +197,7 @@ class UserController extends BaseApiController
         if (empty($roleId)) {
             $roleTitle = Yii::$app->request->getBodyParam('role');
             if ($roleTitle) {
-                $role = Role::findOne(['title' => $roleTitle]);
+                $role = RoleEntity::findOne(['title' => $roleTitle]);
                 $roleId = $role ? $role->id : null;
             }
         }
@@ -221,7 +221,7 @@ class UserController extends BaseApiController
      */
     public function actionRevokeRole($id, $roleId)
     {
-        $user = User::findOne($id);
+        $user = UserEntity::findOne($id);
         if (!$user) {
             throw new NotFoundHttpException("Пользователь #{$id} не найден.");
         }
@@ -240,7 +240,7 @@ class UserController extends BaseApiController
     public function checkAccess($action, $model = null, $params = [])
     {
         if (in_array($action, ['create', 'update', 'delete', 'assign-role', 'revoke-role'])) {
-            /** @var User $currentUser */
+            /** @var UserEntity $currentUser */
             $currentUser = Yii::$app->user->identity;
             if (!$currentUser) {
                 throw new ForbiddenHttpException('Требуется авторизация.');

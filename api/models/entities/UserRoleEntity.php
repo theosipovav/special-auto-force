@@ -10,7 +10,7 @@ use yii\db\ActiveRecord;
  * У каждого пользователя может быть несколько ролей.
  *
  * @SWG\Definition(
- *     definition="UserRole",
+ *     definition="UserRoleEntity",
  *     type="object",
  *     description="Модель связи между пользователями и ролями",
  *     required={"user_id", "role_id"},
@@ -33,10 +33,10 @@ use yii\db\ActiveRecord;
  * @property int $user_id UserId
  * @property int $role_id RoleId
  *
- * @property User $user
- * @property Role $role
+ * @property UserEntity $user
+ * @property RoleEntity $role
  */
-class UserRole extends ActiveRecord
+class UserRoleEntity extends ActiveRecord
 {
     public static function tableName()
     {
@@ -54,8 +54,8 @@ class UserRole extends ActiveRecord
             [['user_id', 'role_id'], 'required'],
             [['user_id', 'role_id'], 'integer'],
             [['user_id', 'role_id'], 'unique', 'targetAttribute' => ['user_id', 'role_id'], 'message' => 'Эта роль уже назначена пользователю'],
-            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
-            [['role_id'], 'exist', 'skipOnError' => true, 'targetClass' => Role::class, 'targetAttribute' => ['role_id' => 'id']],
+            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => UserEntity::class, 'targetAttribute' => ['user_id' => 'id']],
+            [['role_id'], 'exist', 'skipOnError' => true, 'targetClass' => RoleEntity::class, 'targetAttribute' => ['role_id' => 'id']],
         ];
     }
 
@@ -85,11 +85,11 @@ class UserRole extends ActiveRecord
 
     public function getUser()
     {
-        return $this->hasOne(User::class, ['id' => 'user_id']);
+        return $this->hasOne(UserEntity::class, ['id' => 'user_id']);
     }
 
     public function getRole()
     {
-        return $this->hasOne(Role::class, ['id' => 'role_id']);
+        return $this->hasOne(RoleEntity::class, ['id' => 'role_id']);
     }
 }

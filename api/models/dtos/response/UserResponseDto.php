@@ -2,9 +2,9 @@
 
 namespace app\models\dtos\response;
 
-use app\models\entities\User;
-use app\models\entities\Role;
-use app\models\entities\UserRole;
+use app\models\entities\UserEntity;
+use app\models\entities\RoleEntity;
+use app\models\entities\UserRoleEntity;
 
 /**
  * DTO ответа с данными пользователя.
@@ -93,7 +93,7 @@ use app\models\entities\UserRole;
  *         type="array",
  *         description="Связи пользователя с ролями",
  *         @SWG\Items(
- *             ref="#/definitions/UserRole"
+ *             ref="#/definitions/UserRoleEntity"
  *         )
  *     ),
  *     @SWG\Property(
@@ -101,7 +101,7 @@ use app\models\entities\UserRole;
  *         type="array",
  *         description="Роли пользователя",
  *         @SWG\Items(
- *             ref="#/definitions/Role"
+ *             ref="#/definitions/RoleEntity"
  *         )
  *     )
  * )
@@ -136,8 +136,8 @@ class UserResponseDto
      * @param string|null $image Фото (Image) ссылка на аватар через ImageEntity
      * @param string $date_of_registration Дата регистрации (DatOfRegistration)
      * @param bool $active Активен
-     * @param UserRole[] $userRoles Массив UserRole
-     * @param Role[] $roles Массив Role
+     * @param UserRoleEntity[] $userRoles Массив UserRoleEntity
+     * @param RoleEntity[] $roles Массив RoleEntity
      */
     public function __construct(
         int $id,
@@ -174,10 +174,10 @@ class UserResponseDto
     /**
      * Создать DTO из модели пользователя.
      *
-     * @param User $user
+     * @param UserEntity $user
      * @return static
      */
-    public static function fromUser(User $user): self
+    public static function fromUser(UserEntity $user): self
     {
         return new self(
             $user->id,
@@ -191,9 +191,9 @@ class UserResponseDto
             $user->date_of_birth,
             $user->imageEntity ? $user->imageEntity->url : null,
             $user->date_of_registration,
-            $user->status === User::STATUS_ACTIVE,
-            $user->userRoles,   // массив объектов UserRole
-            $user->roles        // массив объектов Role
+            $user->status === UserEntity::STATUS_ACTIVE,
+            $user->userRoles,   // массив объектов UserRoleEntity
+            $user->roles        // массив объектов RoleEntity
         );
     }
 
@@ -215,8 +215,8 @@ class UserResponseDto
             'image' => $this->image,
             'date_of_registration' => $this->date_of_registration,
             'active' => $this->active,
-            'userRoles' => array_map(fn($ur) => $ur instanceof UserRole ? ['user_id' => $ur->user_id, 'role_id' => $ur->role_id] : $ur, $this->userRoles),
-            'roles' => array_map(fn($r) => $r instanceof Role ? ['id' => $r->id, 'title' => $r->title] : $r, $this->roles),
+            'userRoles' => array_map(fn($ur) => $ur instanceof UserRoleEntity ? ['user_id' => $ur->user_id, 'role_id' => $ur->role_id] : $ur, $this->userRoles),
+            'roles' => array_map(fn($r) => $r instanceof RoleEntity ? ['id' => $r->id, 'title' => $r->title] : $r, $this->roles),
         ];
     }
 }

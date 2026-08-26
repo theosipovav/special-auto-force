@@ -6,7 +6,7 @@ use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * Модель сущности "Заявка клиента" (CustomerRequest)
+ * Модель сущности "Заявка клиента"
  *
  * @property int $id Id
  * @property int|null $product_id ProductId
@@ -17,9 +17,9 @@ use yii\db\ActiveRecord;
  * @property string $status Статус (new, processing, completed, cancelled)
  * @property string|null $admin_notes Служебные заметки менеджера
  *
- * @property Product|null $product
+ * @property ProductEntity|null $product
  */
-class CustomerRequest extends ActiveRecord
+class CustomerRequestEntity extends ActiveRecord
 {
     const STATUS_NEW = 'new';
     const STATUS_PROCESSING = 'processing';
@@ -43,7 +43,7 @@ class CustomerRequest extends ActiveRecord
             [['status'], 'string', 'max' => 32],
             [['status'], 'default', 'value' => self::STATUS_NEW],
             [['created_at'], 'safe'],
-            [['product_id'], 'exist', 'skipOnError' => true, 'targetClass' => Product::class, 'targetAttribute' => ['product_id' => 'id']],
+            [['product_id'], 'exist', 'skipOnError' => true, 'targetClass' => ProductEntity::class, 'targetAttribute' => ['product_id' => 'id']],
         ];
     }
 
@@ -89,7 +89,7 @@ class CustomerRequest extends ActiveRecord
 
     public function getProduct()
     {
-        return $this->hasOne(Product::class, ['id' => 'product_id']);
+        return $this->hasOne(ProductEntity::class, ['id' => 'product_id']);
     }
 
     public function beforeSave($insert)

@@ -11,7 +11,7 @@ use yii\filters\auth\HttpBearerAuth;
 use yii\web\Response;
 use app\models\dtos\request\LoginForm;
 use app\models\dtos\request\SignupForm;
-use app\models\entities\User;
+use app\models\entities\UserEntity;
 use yii\web\ServerErrorHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\UnauthorizedHttpException;
@@ -102,7 +102,7 @@ class AuthController extends Controller
         }
 
         // 2. Ищем пользователя по username или email
-        $user = User::find()
+        $user = UserEntity::find()
             ->where(['username' => $model->username])
             ->orWhere(['email' => $model->username])
             ->one();
@@ -197,7 +197,7 @@ class AuthController extends Controller
      */
     public function actionMe()
     {
-        /** @var User $user */
+        /** @var UserEntity $user */
         $user = Yii::$app->user->identity;
         if (!$user) {
             throw new UnauthorizedHttpException('Пользователь не авторизован.');
@@ -226,7 +226,7 @@ class AuthController extends Controller
      */
     public function actionRefresh()
     {
-        /** @var User $user */
+        /** @var UserEntity $user */
         $user = Yii::$app->user->identity;
         if (!$user) {
             throw new UnauthorizedHttpException('Пользователь не авторизован.');

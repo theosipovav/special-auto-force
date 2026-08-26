@@ -6,15 +6,15 @@ use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * Модель связи "Связь между товарами и категориями" (ProductCategory)
+ * Модель связи "Связь между товарами и категориями"
  *
  * @property int $category_id CategoryId
  * @property int $product_id ProductId
  *
- * @property Category $category
- * @property Product $product
+ * @property CategoryEntity $category
+ * @property ProductEntity $product
  */
-class ProductCategory extends ActiveRecord
+class ProductCategoryEntity extends ActiveRecord
 {
     public static function tableName()
     {
@@ -32,8 +32,8 @@ class ProductCategory extends ActiveRecord
             [['category_id', 'product_id'], 'required'],
             [['category_id', 'product_id'], 'integer'],
             [['category_id', 'product_id'], 'unique', 'targetAttribute' => ['category_id', 'product_id']],
-            [['category_id'], 'exist', 'skipOnError' => true, 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
-            [['product_id'], 'exist', 'skipOnError' => true, 'targetClass' => Product::class, 'targetAttribute' => ['product_id' => 'id']],
+            [['category_id'], 'exist', 'skipOnError' => true, 'targetClass' => CategoryEntity::class, 'targetAttribute' => ['category_id' => 'id']],
+            [['product_id'], 'exist', 'skipOnError' => true, 'targetClass' => ProductEntity::class, 'targetAttribute' => ['product_id' => 'id']],
         ];
     }
 
@@ -55,11 +55,11 @@ class ProductCategory extends ActiveRecord
 
     public function getCategory()
     {
-        return $this->hasOne(Category::class, ['id' => 'category_id']);
+        return $this->hasOne(CategoryEntity::class, ['id' => 'category_id']);
     }
 
     public function getProduct()
     {
-        return $this->hasOne(Product::class, ['id' => 'product_id']);
+        return $this->hasOne(ProductEntity::class, ['id' => 'product_id']);
     }
 }

@@ -6,7 +6,7 @@ use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * Модель сущности "Товар" (Product)
+ * Модель сущности "Товар" (ProductEntity)
  *
  * @property int $id Id
  * @property string $title Название (Title)
@@ -20,14 +20,14 @@ use yii\db\ActiveRecord;
  * @property string|null $country Страна производства
  * @property string $created_at Дата создания
  *
- * @property ProductCategory[] $productCategories
- * @property Category[] $categories
- * @property ProductImage[] $productImages
+ * @property ProductCategoryEntity[] $productCategories
+ * @property CategoryEntity[] $categories
+ * @property ProductImageEntity[] $productImages
  * 
  * @property ImageEntity|null $mainImage      Главное изображение (ImageEntity)
  * @property ImageEntity[] $otherImages      Остальные изображения (ImageEntity)
  */
-class Product extends ActiveRecord
+class ProductEntity extends ActiveRecord
 {
     public static function tableName()
     {
@@ -118,26 +118,26 @@ class Product extends ActiveRecord
 
     public function getProductCategories()
     {
-        return $this->hasMany(ProductCategory::class, ['product_id' => 'id']);
+        return $this->hasMany(ProductCategoryEntity::class, ['product_id' => 'id']);
     }
 
     public function getCategories()
     {
-        return $this->hasMany(Category::class, ['id' => 'category_id'])
+        return $this->hasMany(CategoryEntity::class, ['id' => 'category_id'])
             ->via('productCategories');
     }
 
     public function getProductImages()
     {
-        return $this->hasMany(ProductImage::class, ['product_id' => 'id']);
+        return $this->hasMany(ProductImageEntity::class, ['product_id' => 'id']);
     }
 
     /**
-     * Связь с записью ProductImage, где is_main = 1.
+     * Связь с записью ProductImageEntity, где is_main = 1.
      */
     public function getMainProductImage()
     {
-        return $this->hasOne(ProductImage::class, ['product_id' => 'id'])->andWhere(['is_main' => 1]);
+        return $this->hasOne(ProductImageEntity::class, ['product_id' => 'id'])->andWhere(['is_main' => 1]);
     }
     /**
      * Возвращает главное изображение (ImageEntity).
@@ -149,11 +149,11 @@ class Product extends ActiveRecord
     }
 
     /**
-     * Связь с записями ProductImage, где is_main != 1 (т.е. 0 или null).
+     * Связь с записями ProductImageEntity, где is_main != 1 (т.е. 0 или null).
      */
     public function getOtherProductImages()
     {
-        return $this->hasMany(ProductImage::class, ['product_id' => 'id'])->andWhere(['!=', 'is_main', 1]);
+        return $this->hasMany(ProductImageEntity::class, ['product_id' => 'id'])->andWhere(['!=', 'is_main', 1]);
     }
 
     /**

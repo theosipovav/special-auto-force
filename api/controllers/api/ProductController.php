@@ -3,7 +3,7 @@
 namespace app\controllers\api;
 
 use Yii;
-use app\models\entities\Product;
+use app\models\entities\ProductEntity;
 use app\models\dtos\response\ProductResponseDto;
 use app\models\dtos\response\ProductImageResponseDto;
 
@@ -21,7 +21,7 @@ use app\models\dtos\response\ProductImageResponseDto;
  */
 class ProductController extends BaseApiController
 {
-    public $modelClass = Product::class;
+    public $modelClass = ProductEntity::class;
 
     /**
      * Отключаем стандартные CRUD-действия родителя (create/update/delete/view),
@@ -39,7 +39,7 @@ class ProductController extends BaseApiController
      */
     public function actionIndex()
     {
-        $query = Product::find()->with(['productImages.imageEntity']);
+        $query = ProductEntity::find()->with(['productImages.imageEntity']);
 
         // 1. Фильтр по категории
         $categoryId = Yii::$app->request->get('categoryId');
@@ -92,7 +92,7 @@ class ProductController extends BaseApiController
     public function actionLatest()
     {
         $limit = (int) Yii::$app->request->get('limit', 10);
-        $products = Product::find()
+        $products = ProductEntity::find()
             ->with(['productImages.imageEntity'])
             ->orderBy(['id' => SORT_DESC])
             ->limit($limit)
@@ -114,7 +114,7 @@ class ProductController extends BaseApiController
     public function actionPopular()
     {
         $limit = (int) Yii::$app->request->get('limit', 10);
-        $products = Product::find()
+        $products = ProductEntity::find()
             ->with(['productImages.imageEntity'])
             ->orderBy(['id' => SORT_DESC])
             ->limit($limit)
@@ -139,7 +139,7 @@ class ProductController extends BaseApiController
             return ['success' => true, 'total' => 0, 'items' => []];
         }
 
-        $query = Product::find()
+        $query = ProductEntity::find()
             ->with(['productImages.imageEntity'])
             ->andFilterWhere([
                 'or',
@@ -207,9 +207,9 @@ class ProductController extends BaseApiController
     }
 
     /**
-     * Преобразование модели Product в ProductResponseDto.
+     * Преобразование модели ProductEntity в ProductResponseDto.
      */
-    private function mapToProductResponseDto(Product $product): ProductResponseDto
+    private function mapToProductResponseDto(ProductEntity $product): ProductResponseDto
     {
         $imagesDto = [];
         foreach ($product->productImages as $img) {
@@ -223,6 +223,7 @@ class ProductController extends BaseApiController
             );
         }
 
+    
         return new ProductResponseDto(
             (int) $product->id,
             (string) $product->title,

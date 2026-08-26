@@ -2,7 +2,7 @@
 
 namespace app\models\dtos\response;
 
-use app\models\entities\Category;
+use app\models\entities\CategoryEntity;
 use app\models\entities\ImageEntity;
 
 /**
@@ -54,13 +54,13 @@ class CategoryResponseDto
 
 
     /**
-     * Фабричный метод для создания DTO из модели Category и ImageEntity.
+     * Фабричный метод для создания DTO из модели CategoryEntity и ImageEntity.
      *
-     * @param Category $category Категория
+     * @param CategoryEntity $category Категория
      * @param ImageEntity $image Изображение
      * @return CategoryResponseDto
      */
-    public static function create(Category $category, ImageEntity $image): self
+    public static function create(CategoryEntity $category, ImageEntity $image): self
     {
         return new CategoryResponseDto(
             (int) $category->id,

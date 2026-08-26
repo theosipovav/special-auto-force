@@ -7,7 +7,7 @@ use yii\data\ActiveDataProvider;
 use yii\web\NotFoundHttpException;
 use yii\web\ServerErrorHttpException;
 use yii\web\UnprocessableEntityHttpException;
-use app\models\entities\Category;
+use app\models\entities\CategoryEntity;
 use app\models\entities\ImageEntity;
 use app\models\dtos\request\CategoryRequestDto;
 use app\models\dtos\response\CategoryResponseDto;
@@ -22,7 +22,7 @@ use app\models\dtos\response\CategoryResponseDto;
  */
 class CategoryController extends BaseApiAdminController
 {
-    public $modelClass = Category::class;
+    public $modelClass = CategoryEntity::class;
 
     public function actions()
     {
@@ -74,7 +74,7 @@ class CategoryController extends BaseApiAdminController
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            $category = new Category();
+            $category = new CategoryEntity();
             $category->title = $request->title;
             $category->description = $request->description;
 
@@ -136,7 +136,7 @@ class CategoryController extends BaseApiAdminController
     {
         $this->checkAccess();
 
-        $category = Category::findOne($id);
+        $category = CategoryEntity::findOne($id);
         if (!$category) {
             throw new NotFoundHttpException("Категория #{$id} не найдена.");
         }
@@ -195,7 +195,7 @@ class CategoryController extends BaseApiAdminController
      * Удаление категории.
      *
      * Вместе с категорией удаляется связанный файл изображения (если есть).
-     * Связи с товарами (ProductCategory) удаляются каскадно.
+     * Связи с товарами (ProductCategoryEntity) удаляются каскадно.
      *
      * @SWG\Delete(
      *     path="/admin/category/{id}",
@@ -217,7 +217,7 @@ class CategoryController extends BaseApiAdminController
     {
         $this->checkAccess();
 
-        $category = Category::findOne($id);
+        $category = CategoryEntity::findOne($id);
         if (!$category) {
             throw new NotFoundHttpException("Категория #{$id} не найдена.");
         }
@@ -251,12 +251,12 @@ class CategoryController extends BaseApiAdminController
 
 
     /**
-     * Формирует CategoryResponseDto из модели Category.
+     * Формирует CategoryResponseDto из модели CategoryEntity.
      *
-     * @param Category $category
+     * @param CategoryEntity $category
      * @return CategoryResponseDto
      */
-    private function buildCategoryResponseDto(Category $category): CategoryResponseDto
+    private function buildCategoryResponseDto(CategoryEntity $category): CategoryResponseDto
     {
         $category->refresh();
 
