@@ -1,12 +1,13 @@
 <?php
 
-namespace app\controllers\api;
+namespace app\controllers\api\admin;
 
 use Yii;
 use yii\filters\auth\HttpBearerAuth;
 use yii\web\ForbiddenHttpException;
 use app\models\entities\Role;
 use app\models\entities\User;
+use app\controllers\api\BaseApiController;
 
 /**
  * REST API контроллер ролей пользователей (Role)

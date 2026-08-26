@@ -6,13 +6,39 @@ use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * Модель сущности "Роль" (Role)
+ * Модель сущности "Роль" (Role).
  *
- * @property int $id Id
- * @property string $title Название (Title)
+ * @SWG\Definition(
+ *     definition="Role",
+ *     required={"id", "title"},
  *
- * @property UserRole[] $userRoles
- * @property User[] $users
+ *     @SWG\Property(
+ *         property="id",
+ *         type="integer",
+ *         format="int64",
+ *         description="Идентификатор роли"
+ *     ),
+ *     @SWG\Property(
+ *         property="title",
+ *         type="string",
+ *         maxLength=64,
+ *         description="Название роли"
+ *     ),
+ *     @SWG\Property(
+ *         property="users",
+ *         type="array",
+ *         description="Пользователи, которым назначена роль. Возвращается при expand=users.",
+ *         @SWG\Items(
+ *             ref="#/definitions/User"
+ *         )
+ *     ),
+ *     @SWG\Property(
+ *         property="usersCount",
+ *         type="integer",
+ *         format="int32",
+ *         description="Количество пользователей с данной ролью. Возвращается при expand=usersCount."
+ *     )
+ * )
  */
 class Role extends ActiveRecord
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace app\controllers\api;
+namespace app\controllers\api\admin;
 
 use Yii;
 use yii\filters\auth\HttpBearerAuth;
@@ -9,18 +9,11 @@ use yii\web\NotFoundHttpException;
 use yii\data\ActiveDataProvider;
 use app\models\entities\User;
 use app\models\entities\Role;
+use app\controllers\api\BaseApiController;
 
 /**
  * REST API контроллер пользователей (User)
  * 
- * @SWG\Swagger(
- *     @SWG\Info(
- *         title="Users API",
- *         version="1.0",
- *         description="API для управления пользователями"
- *     ),
- *     basePath="/api"
- * )
  */
 class UserController extends BaseApiController
 {
@@ -39,7 +32,7 @@ class UserController extends BaseApiController
      *     @SWG\Parameter(name="per-page", in="query", type="integer", description="Количество элементов на странице", default=20),
      *     @SWG\Response(response=200, description="Список пользователей",
      *         @SWG\Schema(
-     *             @SWG\Property(property="items", type="array", @SWG\Items(ref="#/definitions/User")),
+     *             @SWG\Property(property="items", type="object", @SWG\Items(ref="#/definitions/UserResponseDto")),
      *             @SWG\Property(property="_meta", type="object")
      *         )
      *     )
@@ -53,7 +46,7 @@ class UserController extends BaseApiController
      *     produces={"application/json"},
      *     consumes={"application/json"},
      *     security={{"bearerAuth":{}}},
-     *     @SWG\Parameter(name="body", in="body", required=true, @SWG\Schema(ref="#/definitions/UserCreate")),
+     *     @SWG\Parameter(name="body", in="body", required=true, @SWG\Schema(ref="#/definitions/User")),
      *     @SWG\Response(response=201, description="Пользователь создан"),
      *     @SWG\Response(response=403, description="Доступ запрещен"),
      *     @SWG\Response(response=422, description="Ошибка валидации")
@@ -79,7 +72,7 @@ class UserController extends BaseApiController
      *     consumes={"application/json"},
      *     security={{"bearerAuth":{}}},
      *     @SWG\Parameter(name="id", in="path", type="integer", required=true, description="ID пользователя"),
-     *     @SWG\Parameter(name="body", in="body", required=true, @SWG\Schema(ref="#/definitions/UserUpdate")),
+     *     @SWG\Parameter(name="body", in="body", required=true, @SWG\Schema(ref="#/definitions/User")),
      *     @SWG\Response(response=200, description="Пользователь обновлен"),
      *     @SWG\Response(response=403, description="Доступ запрещен"),
      *     @SWG\Response(response=404, description="Пользователь не найден"),
@@ -95,7 +88,7 @@ class UserController extends BaseApiController
      *     consumes={"application/json"},
      *     security={{"bearerAuth":{}}},
      *     @SWG\Parameter(name="id", in="path", type="integer", required=true, description="ID пользователя"),
-     *     @SWG\Parameter(name="body", in="body", required=true, @SWG\Schema(ref="#/definitions/UserUpdate")),
+     *     @SWG\Parameter(name="body", in="body", required=true, @SWG\Schema(ref="#/definitions/User")),
      *     @SWG\Response(response=200, description="Пользователь обновлен"),
      *     @SWG\Response(response=403, description="Доступ запрещен"),
      *     @SWG\Response(response=404, description="Пользователь не найден"),

@@ -3,144 +3,135 @@
 namespace app\controllers\api;
 
 use Yii;
-use yii\filters\auth\HttpBearerAuth;
-use yii\web\ForbiddenHttpException;
-use yii\web\NotFoundHttpException;
-use yii\data\ActiveDataProvider;
 use app\models\entities\Product;
-use app\models\entities\ProductCategory;
-use app\models\entities\ProductImage;
-use app\models\entities\User;
-use app\models\dtos\request\CreateProductRequest;
-use app\models\dtos\response\OkResponseDto;
-use app\models\dtos\response\ErrorResponseDto;
+use app\models\dtos\response\ProductResponseDto;
+use app\models\dtos\response\ProductImageResponseDto;
 
 /**
- * REST API контроллер товаров (Product)
+ * Публичный REST API контроллер товаров (витрина магазина).
+ *
+ * Все методы доступны без авторизации любому пользователю.
+ * Возвращает данные в виде ProductResponseDto.
+ *
+ * Маршруты:
+ *  - GET /api/products          — список с фильтрацией и пагинацией
+ *  - GET /api/products/latest   — последние добавленные
+ *  - GET /api/products/popular  — популярные
+ *  - GET /api/products/search   — поиск / автодополнение
  */
 class ProductController extends BaseApiController
 {
     public $modelClass = Product::class;
 
-    public function behaviors()
-    {
-        $behaviors = parent::behaviors();
-        $behaviors['authenticator'] = [
-            'class' => HttpBearerAuth::class,
-            'only' => ['create', 'update', 'delete', 'sync-categories', 'add-image'],
-        ];
-        return $behaviors;
-    }
-
+    /**
+     * Отключаем стандартные CRUD-действия родителя (create/update/delete/view),
+     * так как витрина предоставляет только чтение.
+     */
     public function actions()
     {
-        $actions = parent::actions();
+        // Возвращаем пустой массив — стандартные действия не нужны
+        return [];
+    }
 
-        // Удаляем стандартное действие create, чтобы использовать своё
-        unset($actions['create']);
-        unset($actions['delete']);
+    /**
+     * GET /api/products
+     * Список товаров с фильтрацией, пагинацией и сортировкой.
+     */
+    public function actionIndex()
+    {
+        $query = Product::find()->with(['productImages.imageEntity']);
 
-        // Custom filtering in index action
-        $actions['index']['prepareDataProvider'] = function () {
-            $query = Product::find()->with(['categories', 'productImages']);
+        // 1. Фильтр по категории
+        $categoryId = Yii::$app->request->get('categoryId');
+        if (!empty($categoryId)) {
+            $query->joinWith('productCategories')
+                ->andWhere(['{{%product_category}}.category_id' => (int) $categoryId]);
+        }
 
-            // 1. Filter by category
-            $categoryId = Yii::$app->request->get('categoryId');
-            if (!empty($categoryId)) {
-                $query->joinWith('productCategories')
-                    ->andWhere(['{{%product_category}}.category_id' => (int) $categoryId]);
-            }
+        // 2. Фильтр по наличию
+        $inStock = Yii::$app->request->get('inStock');
+        if ($inStock !== null && $inStock !== '') {
+            $query->andWhere(['in_stock' => ($inStock === '1' || $inStock === 'true' || $inStock === 1) ? 1 : 0]);
+        }
 
-            // 2. Filter by stock status
-            $inStock = Yii::$app->request->get('inStock');
-            if ($inStock !== null && $inStock !== '') {
-                $query->andWhere(['in_stock' => ($inStock === '1' || $inStock === 'true' || $inStock === 1) ? 1 : 0]);
-            }
-
-            // 3. Search query
-            $search = Yii::$app->request->get('q');
-            if (!empty($search)) {
-                $query->andFilterWhere([
-                    'or',
-                    ['like', '{{%product}}.title', $search],
-                    ['like', '{{%product}}.article', $search],
-                    ['like', '{{%product}}.short_description', $search],
-                    ['like', '{{%product}}.long_description', $search],
-                    ['like', '{{%product}}.info', $search],
-                ]);
-            }
-
-            // 4. Sorting
-            $sortParam = Yii::$app->request->get('sort');
-            $order = ['id' => SORT_DESC];
-            if ($sortParam === 'price_asc') {
-                $order = ['price' => SORT_ASC];
-            } elseif ($sortParam === 'price_desc') {
-                $order = ['price' => SORT_DESC];
-            } elseif ($sortParam === 'popular') {
-                $order = ['id' => SORT_DESC];
-            } elseif ($sortParam === 'title') {
-                $order = ['title' => SORT_ASC];
-            }
-
-            return new ActiveDataProvider([
-                'query' => $query,
-                'pagination' => [
-                    'pageSize' => 50, // Вывод по ~50 товаров на страницу
-                    'pageSizeParam' => 'per-page',
-                ],
-                'sort' => [
-                    'defaultOrder' => $order,
-                ],
+        // 3. Поиск
+        $search = Yii::$app->request->get('q');
+        if (!empty($search)) {
+            $query->andFilterWhere([
+                'or',
+                ['like', '{{%product}}.title', $search],
+                ['like', '{{%product}}.article', $search],
+                ['like', '{{%product}}.short_description', $search],
+                ['like', '{{%product}}.long_description', $search],
+                ['like', '{{%product}}.info', $search],
             ]);
-        };
+        }
 
-        return $actions;
+        // 4. Сортировка
+        $sortParam = Yii::$app->request->get('sort');
+        $order = ['id' => SORT_DESC];
+        if ($sortParam === 'price_asc') {
+            $order = ['price' => SORT_ASC];
+        } elseif ($sortParam === 'price_desc') {
+            $order = ['price' => SORT_DESC];
+        } elseif ($sortParam === 'popular') {
+            $order = ['id' => SORT_DESC];
+        } elseif ($sortParam === 'title') {
+            $order = ['title' => SORT_ASC];
+        }
+
+        $query->orderBy($order);
+
+        return $this->pagination($query, 50);
     }
 
     /**
      * GET /api/products/latest
-     * Карусель: 10 последних добавленных товаров
+     * Карусель: последние добавленные товары.
      */
     public function actionLatest()
     {
         $limit = (int) Yii::$app->request->get('limit', 10);
         $products = Product::find()
-            ->with(['categories', 'productImages'])
+            ->with(['productImages.imageEntity'])
             ->orderBy(['id' => SORT_DESC])
             ->limit($limit)
             ->all();
 
+        $items = array_map(fn($p) => $this->mapToProductResponseDto($p)->toArray(), $products);
+
         return [
             'success' => true,
-            'count' => count($products),
-            'items' => $products,
+            'count' => count($items),
+            'items' => $items,
         ];
     }
 
     /**
      * GET /api/products/popular
-     * Карусель: 10 самых популярных товаров (по дате добавления)
+     * Карусель: самые популярные товары.
      */
     public function actionPopular()
     {
         $limit = (int) Yii::$app->request->get('limit', 10);
         $products = Product::find()
-            ->with(['categories', 'productImages'])
+            ->with(['productImages.imageEntity'])
             ->orderBy(['id' => SORT_DESC])
             ->limit($limit)
             ->all();
 
+        $items = array_map(fn($p) => $this->mapToProductResponseDto($p)->toArray(), $products);
+
         return [
             'success' => true,
-            'count' => count($products),
-            'items' => $products,
+            'count' => count($items),
+            'items' => $items,
         ];
     }
 
     /**
      * GET /api/products/search?q=...
-     * Быстрый поиск и автодополнение
+     * Быстрый поиск и автодополнение.
      */
     public function actionSearch($q = '')
     {
@@ -149,7 +140,7 @@ class ProductController extends BaseApiController
         }
 
         $query = Product::find()
-            ->with(['categories', 'productImages'])
+            ->with(['productImages.imageEntity'])
             ->andFilterWhere([
                 'or',
                 ['like', 'title', $q],
@@ -161,188 +152,90 @@ class ProductController extends BaseApiController
         $limit = (int) Yii::$app->request->get('limit', 20);
         $products = $query->limit($limit)->all();
 
+        $items = array_map(fn($p) => $this->mapToProductResponseDto($p)->toArray(), $products);
+
         return [
             'success' => true,
             'query' => $q,
-            'total' => count($products),
-            'items' => $products,
+            'total' => count($items),
+            'items' => $items,
         ];
     }
 
     /**
-     * POST /api/products/{id}/sync-categories
-     * Привязка товара к набору категорий
+     * Формирует ответ с пагинацией и массивом ProductResponseDto.
+     *
+     * @param \yii\db\ActiveQuery $query
+     * @param int $defaultPageSize
+     * @return array
      */
-    public function actionSyncCategories($id)
+    protected function pagination(\yii\db\ActiveQuery $query, int $defaultPageSize = 50): array
     {
-        $product = Product::findOne($id);
-        if (!$product) {
-            throw new NotFoundHttpException("Товар #{$id} не найден.");
-        }
+        $request = Yii::$app->request;
+        $page = (int) $request->get('page', 1);
+        $perPage = (int) $request->get('per-page', $defaultPageSize);
 
-        $categoryIds = Yii::$app->request->getBodyParam('categoryIds', []);
-        if (!is_array($categoryIds)) {
-            $categoryIds = [$categoryIds];
-        }
+        if ($perPage < 1) $perPage = $defaultPageSize;
+        if ($page < 1) $page = 1;
 
-        // Remove old relations
-        ProductCategory::deleteAll(['product_id' => $id]);
+        $countQuery = clone $query;
+        $totalCount = (int) $countQuery->count();
 
-        // Insert new relations
-        foreach ($categoryIds as $catId) {
-            $pc = new ProductCategory();
-            $pc->product_id = (int) $id;
-            $pc->category_id = (int) $catId;
-            $pc->save();
+        $pageCount = $perPage > 0 ? (int) ceil($totalCount / $perPage) : 0;
+
+        $products = $query->offset(($page - 1) * $perPage)
+            ->limit($perPage)
+            ->all();
+
+        $items = [];
+        foreach ($products as $product) {
+            $items[] = $this->mapToProductResponseDto($product)->toArray();
         }
 
         return [
-            'success' => true,
-            'message' => 'Категории товара успешно обновлены',
-            'product' => $product->toArray(),
+            'items' => $items,
+            '_links' => [
+                'self' => ['href' => $request->absoluteUrl],
+            ],
+            '_meta' => [
+                'totalCount' => $totalCount,
+                'pageCount' => $pageCount,
+                'currentPage' => $page,
+                'perPage' => $perPage,
+            ],
         ];
     }
 
     /**
-     * POST /api/products/{id}/images
-     * Добавление фотографии в галерею товара
+     * Преобразование модели Product в ProductResponseDto.
      */
-    public function actionAddImage($id)
+    private function mapToProductResponseDto(Product $product): ProductResponseDto
     {
-        $product = Product::findOne($id);
-        if (!$product) {
-            throw new NotFoundHttpException("Товар #{$id} не найден.");
+        $imagesDto = [];
+        foreach ($product->productImages as $img) {
+            $url = $img->imageEntity ? $img->imageEntity->url : '';
+            $imagesDto[] = new ProductImageResponseDto(
+                (int) $img->product_id,
+                (int) $img->image_id,
+                (bool) $img->is_main,
+                (string) $img->title,
+                (string) $url
+            );
         }
 
-        $img = new ProductImage();
-        $img->product_id = (int) $id;
-        $img->image_id = Yii::$app->request->getBodyParam('image_id');
-        $img->title = Yii::$app->request->getBodyParam('title', $product->title);
-        $img->is_main = Yii::$app->request->getBodyParam('is_main', false);
-
-        if ($img->save()) {
-            return [
-                'success' => true,
-                'message' => 'Фотография добавлена в галерею товара',
-                'data' => $img->toArray(),
-            ];
-        }
-
-        Yii::$app->response->statusCode = 422;
-        return [
-            'success' => false,
-            'errors' => $img->getErrors(),
-        ];
-    }
-
-    public function checkAccess($action, $model = null, $params = [])
-    {
-        if (in_array($action, ['create', 'update', 'delete', 'sync-categories', 'add-image'])) {
-
-            /** @var User $currentUser */
-            $currentUser = Yii::$app->user->identity;
-            if (!$currentUser || (!$currentUser->hasRole('admin') && !$currentUser->hasRole('Администратор'))) {
-                throw new ForbiddenHttpException('Доступ разрешен только администраторам.');
-            }
-        }
-    }
-
-    /**
-     * POST /api/products
-     * Создание нового товара.
-     *
-     * @return OkResponseDto|ErrorResponseDto
-     */
-    public function actionCreate()
-    {
-        $request = new CreateProductRequest();
-        $request->load(Yii::$app->request->getBodyParams(), '');
-
-
-        if (!$request->validate()) {
-            Yii::$app->response->statusCode = 422;
-            return new ErrorResponseDto('Ошибка валидации данных', $request->getErrors());
-        }
-
-        $product = $request->createProduct();
-        if ($product === null) {
-            Yii::$app->response->statusCode = 500;
-            return new ErrorResponseDto('Не удалось создать товар', null);
-        }
-
-        return new OkResponseDto('Товар успешно создан', $product->toArray());
-    }
-
-    /**
-     * DELETE /api/products/{id}
-     * Удаление товара и всех связанных файлов изображений.
-     *
-     * @param int $id ID товара
-     * @return \yii\web\Response
-     * @throws NotFoundHttpException если товар не найден
-     * @throws ForbiddenHttpException если недостаточно прав
-     */
-    public function actionDelete($id)
-    {
-        $product = Product::findOne($id);
-        if (!$product) {
-            throw new NotFoundHttpException("Товар #{$id} не найден.");
-        }
-
-        // Проверка прав доступа (администратор)
-        $this->checkAccess('delete', $product);
-
-        // Удаляем файлы изображений
-        $this->deleteImageFiles($product);
-
-        // Удаляем запись товара (каскадно удалятся связанные записи, если настроено)
-        if ($product->delete() === false) {
-            Yii::$app->response->statusCode = 500;
-            return new ErrorResponseDto('Не удалось удалить товар', $product->getErrors());
-        }
-
-        Yii::$app->response->statusCode = 204;
-        return null;
-    }
-
-    /**
-     * Удаляет файлы изображений, связанные с товаром.
-     *
-     * @param Product $product
-     */
-    private function deleteImageFiles(Product $product)
-    {
-        $uploadPath = Yii::getAlias('@webroot/web/uploads/products/');
-
-        // Удаляем изображения галереи
-        $productImages = $product->productImages;
-        foreach ($productImages as $image) {
-            if (!empty($image->imageEntity)) {
-                $this->deleteFile($uploadPath, $image->imageEntity->path);
-            }
-        }
-    }
-
-
-
-    /**
-     * Удаляет файл по пути, извлекая имя файла из полного пути.
-     *
-     * @param string $uploadPath Абсолютный путь к папке загрузок
-     * @param string $filePath Путь к файлу (может быть относительным или абсолютным)
-     */
-    private function deleteFile($uploadPath, $filePath)
-    {
-        // Извлекаем только имя файла (без пути)
-        $fileName = basename($filePath);
-        $fullPath = $uploadPath . $fileName;
-
-        if (file_exists($fullPath) && is_file($fullPath)) {
-            if (!unlink($fullPath)) {
-                Yii::warning("Не удалось удалить файл: {$fullPath}", __METHOD__);
-            }
-        } else {
-            Yii::info("Файл не найден для удаления: {$fullPath}", __METHOD__);
-        }
+        return new ProductResponseDto(
+            (int) $product->id,
+            (string) $product->title,
+            (string) $product->short_description,
+            (string) $product->long_description,
+            $product->info,
+            $product->article,
+            $product->price !== null ? (float) $product->price : null,
+            (int) $product->in_stock,
+            $imagesDto,
+            $product->manufacturer,
+            $product->country,
+            (string) $product->created_at
+        );
     }
 }

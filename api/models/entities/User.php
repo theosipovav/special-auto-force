@@ -11,7 +11,17 @@ use Firebase\JWT\Key;
 /**
  * Модель сущности "Пользователь" (User)
  *
- * @property int $id Id
+ * @SWG\Definition(
+ *     definition="User",
+ *     type="object",
+ *     description="Модель пользователя (полное представление)",
+ *     required={"id", "userName", "email", "phone", "name", "surname", "status", "datOfRegistration"}
+ * )
+ *
+ *
+ *
+ *
+ * @property int $id Идентификатор
  * @property string $username Логин (UserName)
  * @property string $password_hash Хеш пароля (Password)
  * @property string $email Адрес электронной почты (Email)
@@ -86,7 +96,95 @@ class User extends ActiveRecord implements IdentityInterface
     }
 
     /**
-     * REST API fields representation
+     * @SWG\Property(
+     *     property="id",
+     *     type="integer",
+     *     description="ID пользователя",
+     *     example=42
+     * )
+     * @SWG\Property(
+     *     property="userName",
+     *     type="string",
+     *     description="Логин пользователя",
+     *     example="ivanov_ii"
+     * )
+     * @SWG\Property(
+     *     property="email",
+     *     type="string",
+     *     format="email",
+     *     description="Адрес электронной почты",
+     *     example="ivanov@example.com"
+     * )
+     * @SWG\Property(
+     *     property="phone",
+     *     type="string",
+     *     description="Номер телефона",
+     *     example="+7 (999) 123-45-67"
+     * )
+     * @SWG\Property(
+     *     property="address",
+     *     type="string",
+     *     description="Адрес проживания",
+     *     example="г. Москва, ул. Ленина, д. 10"
+     * )
+     * @SWG\Property(
+     *     property="name",
+     *     type="string",
+     *     description="Имя",
+     *     example="Иван"
+     * )
+     * @SWG\Property(
+     *     property="surname",
+     *     type="string",
+     *     description="Фамилия",
+     *     example="Иванов"
+     * )
+     * @SWG\Property(
+     *     property="patronymic",
+     *     type="string",
+     *     description="Отчество",
+     *     example="Иванович"
+     * )
+     * @SWG\Property(
+     *     property="dateOfBirth",
+     *     type="string",
+     *     format="date",
+     *     description="Дата рождения (YYYY-MM-DD)",
+     *     example="1990-05-15"
+     * )
+     * @SWG\Property(
+     *     property="image",
+     *     type="string",
+     *     format="url",
+     *     description="URL аватара пользователя",
+     *     example="https://api.example.com/uploads/avatars/42.jpg"
+     * )
+     * @SWG\Property(
+     *     property="datOfRegistration",
+     *     type="string",
+     *     format="date-time",
+     *     description="Дата и время регистрации",
+     *     example="2024-01-15T09:30:00+03:00"
+     * )
+     * @SWG\Property(
+     *     property="fullName",
+     *     type="string",
+     *     description="Полное ФИО",
+     *     example="Иванов Иван Иванович"
+     * )
+     * @SWG\Property(
+     *     property="status",
+     *     type="integer",
+     *     enum={0, 9, 10},
+     *     description="Статус аккаунта: 0 — удалён, 9 — неактивен, 10 — активен",
+     *     example=10
+     * )
+     * @SWG\Property(
+     *     property="roles",
+     *     type="array",
+     *     description="Назначенные роли",
+     *     @SWG\Items(ref="#/definitions/UserRole")
+     * )
      */
     public function fields()
     {
@@ -278,7 +376,9 @@ class User extends ActiveRecord implements IdentityInterface
             'sub' => $this->id,
             'username' => $this->username,
             'email' => $this->email,
-            'roles' => array_map(function ($r) { return $r->title; }, $this->roles),
+            'roles' => array_map(function ($r) {
+                return $r->title;
+            }, $this->roles),
         ];
 
         $token = JWT::encode($payload, $secretKey, 'HS256');

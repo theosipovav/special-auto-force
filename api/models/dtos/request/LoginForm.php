@@ -7,7 +7,24 @@ use yii\base\Model;
 use app\models\entities\User;
 
 /**
- * Форма авторизации в REST API
+ * Форма авторизации.
+ *
+ * @SWG\Definition(
+ *     definition="LoginForm",
+ *     required={"username", "password"},
+ *
+ *     @SWG\Property(
+ *         property="username",
+ *         type="string",
+ *         description="Логин или E-mail"
+ *     ),
+ *     @SWG\Property(
+ *         property="password",
+ *         type="string",
+ *         format="password",
+ *         description="Пароль"
+ *     )
+ * )
  */
 class LoginForm extends Model
 {

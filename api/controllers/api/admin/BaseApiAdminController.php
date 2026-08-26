@@ -1,0 +1,55 @@
+<?php
+
+namespace app\controllers\api\admin;
+
+use Yii;
+use app\controllers\api\BaseApiController;
+use yii\web\ForbiddenHttpException;
+use app\models\entities\User;
+
+/**
+ * Базовый админский абстрактный REST API контроллер 
+ */
+abstract class BaseApiAdminController extends BaseApiController
+{
+
+    /**
+     * Подключаем Bearer-аутентификацию для ВСЕХ действий контроллера.
+     * Все методы требуют авторизации (Bearer JWT).
+     */
+    public function behaviors()
+    {
+        $behaviors = parent::behaviors();
+
+        // Применяем аутентификацию ко всем действиям (пустой массив = все)
+        $behaviors += $this->applyBearerAuth([]);
+
+        return $behaviors;
+    }
+
+    /**
+     * Проверка прав доступа.
+     * Доступ разрешён только ролям admin / Администратор / manager / Менеджер.
+     */
+    public function checkAccess($action, $model = null, $params = [])
+    {
+        /** @var User|null $currentUser */
+        $currentUser = Yii::$app->user->identity;
+
+        $allowedRoles = ['admin', 'manager'];
+        $hasAccess = false;
+
+        if ($currentUser) {
+            foreach ($allowedRoles as $role) {
+                if ($currentUser->hasRole($role)) {
+                    $hasAccess = true;
+                    break;
+                }
+            }
+        }
+
+        if (!$hasAccess) {
+            throw new ForbiddenHttpException('Доступ разрешен только администраторам и менеджерам.');
+        }
+    }
+}

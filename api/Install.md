@@ -78,8 +78,8 @@ chown www-data:www-data runtime runtime/cache runtime/logs
 ## Настройка прав для weboot
 > заранее перейдем в папку с проектом yii2
 ```bash
-mkdir -p web/assets web/uploads/products
-chown www-data:www-data web web/assets web/uploads web/uploads/products
+mkdir -p web/assets web/uploads/images
+chown www-data:www-data web web/assets web/uploads web/uploads/images
 ```
 
 

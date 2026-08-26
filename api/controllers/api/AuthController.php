@@ -3,7 +3,6 @@
 
 namespace app\controllers\api;
 
-use app\models\dtos\response\ErrorResponseDto;
 use app\models\dtos\response\SigninResponsDto;
 use Yii;
 use yii\rest\Controller;
@@ -13,18 +12,13 @@ use yii\web\Response;
 use app\models\dtos\request\LoginForm;
 use app\models\dtos\request\SignupForm;
 use app\models\entities\User;
+use yii\web\ServerErrorHttpException;
+use yii\web\NotFoundHttpException;
+use yii\web\UnauthorizedHttpException;
 
 /**
  * Контроллер аутентификации и профиля пользователя (JWT REST API)
  * 
- * @SWG\Swagger(
- *     @SWG\Info(
- *         title="Auth API",
- *         version="1.0",
- *         description="API для аутентификации и управления профилем пользователя"
- *     ),
- *     basePath="/api"
- * )
  */
 class AuthController extends Controller
 {
@@ -84,20 +78,17 @@ class AuthController extends Controller
      *         )
      *     ),
      *     @SWG\Response(
-     *         response=400,
-     *         description="Ошибка валидации данных",
-     *         @SWG\Schema(ref="#/definitions/ErrorResponse")
-     *     ),
-     *     @SWG\Response(
-     *         response=403,
-     *         description="Неверный пароль",
-     *         @SWG\Schema(ref="#/definitions/ErrorResponse")
-     *     ),
-     *     @SWG\Response(
      *         response=404,
      *         description="Пользователь не найден",
-     *         @SWG\Schema(ref="#/definitions/ErrorResponse")
-     *     )
+     *     ),
+     *     @SWG\Response(
+     *         response=401,
+     *         description="Неверный пароль",
+     *     ),
+     *     @SWG\Response(
+     *         response=500,
+     *         description="Ошибка сервера",
+     *     ),
      * )
      */
     public function actionLogin()
@@ -107,8 +98,7 @@ class AuthController extends Controller
 
         // 1. Проверяем обязательные поля (username и password)
         if (!$model->validate()) {
-            Yii::$app->response->statusCode = 400;
-            return new ErrorResponseDto('Ошибка валидации данных', $model->getErrors());
+            throw new ServerErrorHttpException('Проверьте правильность заполнения данных и повторите запрос.');
         }
 
         // 2. Ищем пользователя по username или email
@@ -118,16 +108,13 @@ class AuthController extends Controller
             ->one();
 
         if (!$user) {
-            Yii::$app->response->statusCode = 404;
-            return new ErrorResponseDto('Пользователь не найден', null);
+            throw new NotFoundHttpException('Пользователь не найден');
         }
 
         // 3. Проверяем пароль
         if (!$user->validatePassword($model->password)) {
-            Yii::$app->response->statusCode = 403;
-            return new ErrorResponseDto('Не верный пароль', null);
+            throw new UnauthorizedHttpException('Введен не верный пароль.');
         }
-
 
         // 4. Успех – генерируем токен
         $token = $user->generateAccessToken();
@@ -137,7 +124,6 @@ class AuthController extends Controller
         $res = new SigninResponsDto($token, 'Bearer', $expiresIn, $user->toArray());
         return $res;
     }
-
 
     /**
      * @SWG\Post(
@@ -167,12 +153,11 @@ class AuthController extends Controller
      *     @SWG\Response(
      *         response=200,
      *         description="Успешная регистрация",
-     *         @SWG\Schema(ref="#/definitions/SigninResponse")
+     *         @SWG\Schema(ref="#/definitions/SigninResponsDto")
      *     ),
      *     @SWG\Response(
-     *         response=422,
-     *         description="Ошибка валидации данных",
-     *         @SWG\Schema(ref="#/definitions/ErrorResponse")
+     *         response=500,
+     *         description="Ошибка при регистрации",
      *     )
      * )
      */
@@ -186,8 +171,9 @@ class AuthController extends Controller
             $expiresIn = Yii::$app->params['jwtExpire'] ?? (86400 * 7);
             return new SigninResponsDto($token, 'Bearer', $expiresIn, $user->toArray());
         }
-        Yii::$app->response->statusCode = 422;
-        return new ErrorResponseDto('Ошибка при регистрации', $model->getErrors());
+
+        Yii::error('SignupForm::signup returned null', __METHOD__);
+        throw new ServerErrorHttpException('Ошибка при регистрации.');
     }
 
     /**
@@ -197,16 +183,15 @@ class AuthController extends Controller
      *     summary="Получить данные текущего пользователя",
      *     description="Возвращает информацию об авторизованном пользователе. Требуется JWT токен.",
      *     produces={"application/json"},
-     *     security={{"bearerAuth":{}}},
+     *     security={{"Bearer":{}}},
      *     @SWG\Response(
      *         response=200,
      *         description="Данные пользователя",
-     *         @SWG\Schema(ref="#/definitions/User")
+     *         @SWG\Schema(ref="#/definitions/UserResponseDto")
      *     ),
      *     @SWG\Response(
-     *         response=403,
+     *         response=401,
      *         description="Пользователь не авторизован",
-     *         @SWG\Schema(ref="#/definitions/ErrorResponse")
      *     )
      * )
      */
@@ -215,8 +200,7 @@ class AuthController extends Controller
         /** @var User $user */
         $user = Yii::$app->user->identity;
         if (!$user) {
-            Yii::$app->response->statusCode = 403;
-            return new ErrorResponseDto('Пользователь не авторизован.', null);
+            throw new UnauthorizedHttpException('Пользователь не авторизован.');
         }
         return $user->toArray();
     }
@@ -232,12 +216,11 @@ class AuthController extends Controller
      *     @SWG\Response(
      *         response=200,
      *         description="Новый токен",
-     *         @SWG\Schema(ref="#/definitions/SigninResponse")
+     *         @SWG\Schema(ref="#/definitions/SigninResponsDto")
      *     ),
      *     @SWG\Response(
-     *         response=403,
+     *         response=401,
      *         description="Пользователь не авторизован",
-     *         @SWG\Schema(ref="#/definitions/ErrorResponse")
      *     )
      * )
      */
@@ -246,8 +229,7 @@ class AuthController extends Controller
         /** @var User $user */
         $user = Yii::$app->user->identity;
         if (!$user) {
-            Yii::$app->response->statusCode = 403;
-            return new ErrorResponseDto('Пользователь не авторизован.', null);
+            throw new UnauthorizedHttpException('Пользователь не авторизован.');
         }
         $newToken = $user->generateAccessToken();
         $expiresIn = Yii::$app->params['jwtExpire'] ?? (86400 * 7);

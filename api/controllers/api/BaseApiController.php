@@ -2,7 +2,6 @@
 
 namespace app\controllers\api;
 
-use Yii;
 use yii\rest\ActiveController;
 use yii\filters\Cors;
 use yii\filters\auth\HttpBearerAuth;
@@ -23,11 +22,7 @@ abstract class BaseApiController extends ActiveController
     public function behaviors()
     {
         $behaviors = parent::behaviors();
-
-        // 1. Format JSON response
         $behaviors['contentNegotiator']['formats']['text/html'] = Response::FORMAT_JSON;
-
-        // 2. CORS handling
         $behaviors['corsFilter'] = [
             'class' => Cors::class,
             'cors' => [
@@ -44,7 +39,6 @@ abstract class BaseApiController extends ActiveController
                 ],
             ],
         ];
-
         return $behaviors;
     }
 
@@ -67,4 +61,5 @@ abstract class BaseApiController extends ActiveController
             ],
         ];
     }
+
 }

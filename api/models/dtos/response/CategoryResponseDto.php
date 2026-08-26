@@ -1,9 +1,35 @@
 <?php
 
-namespace app\models\dto\response;
+namespace app\models\dtos\response;
 
 /**
- * DTO для ответа с данными категории
+ * DTO ответа с данными категории.
+ *
+ * @SWG\Definition(
+ *     definition="CategoryResponseDto",
+ *     required={"id", "title"},
+ *
+ *     @SWG\Property(
+ *         property="id",
+ *         type="integer",
+ *         description="Идентификатор категории"
+ *     ),
+ *     @SWG\Property(
+ *         property="title",
+ *         type="string",
+ *         description="Название категории"
+ *     ),
+ *     @SWG\Property(
+ *         property="description",
+ *         type="string",
+ *         description="Описание категории"
+ *     ),
+ *     @SWG\Property(
+ *         property="image",
+ *         type="string",
+ *         description="Сылка на изображение категории"
+ *     )
+ * )
  */
 class CategoryResponseDto
 {

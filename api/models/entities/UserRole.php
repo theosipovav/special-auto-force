@@ -6,8 +6,29 @@ use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * Модель связи "Связь между пользователями и ролями" (UserRole)
+ * Модель связи "Связь между пользователями и ролями"
  * У каждого пользователя может быть несколько ролей.
+ *
+ * @SWG\Definition(
+ *     definition="UserRole",
+ *     type="object",
+ *     description="Модель связи между пользователями и ролями",
+ *     required={"user_id", "role_id"},
+ *
+ *     @SWG\Property(
+ *         property="user_id",
+ *         type="integer",
+ *         format="int64",
+ *         description="Идентификатор пользователя"
+ *     ),
+ * 
+ *     @SWG\Property(
+ *         property="role_id",
+ *         type="integer",
+ *         format="int64",
+ *         description="Идентификатор роли"
+ *     ),
+ * )
  *
  * @property int $user_id UserId
  * @property int $role_id RoleId

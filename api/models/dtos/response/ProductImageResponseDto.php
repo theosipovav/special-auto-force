@@ -1,9 +1,47 @@
 <?php
 
-namespace app\models\dto\response;
+namespace app\models\dtos\response;
 
 /**
- * DTO для ответа с данными изображения товара
+ * DTO ответа с данными изображения товара.
+ *
+ * @SWG\Definition(
+ *     definition="ProductImageResponseDto",
+ *     required={
+ *         "product_id",
+ *         "image_id",
+ *         "is_main",
+ *         "title",
+ *         "url"
+ *     },
+ *
+ *     @SWG\Property(
+ *         property="product_id",
+ *         type="integer",
+ *         description="Идентификатор товара"
+ *     ),
+ *     @SWG\Property(
+ *         property="image_id",
+ *         type="integer",
+ *         description="Идентификатор изображения"
+ *     ),
+ *     @SWG\Property(
+ *         property="is_main",
+ *         type="boolean",
+ *         description="Является ли изображение главным"
+ *     ),
+ *     @SWG\Property(
+ *         property="title",
+ *         type="string",
+ *         description="Название изображения"
+ *     ),
+ *     @SWG\Property(
+ *         property="url",
+ *         type="string",
+ *         format="uri",
+ *         description="URL изображения"
+ *     )
+ * )
  */
 class ProductImageResponseDto
 {

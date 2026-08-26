@@ -1,6 +1,6 @@
 <?php
 
-namespace app\controllers\api;
+namespace app\controllers\api\admin;
 
 use Yii;
 use yii\filters\auth\HttpBearerAuth;
@@ -8,6 +8,7 @@ use yii\web\ForbiddenHttpException;
 use yii\data\ActiveDataProvider;
 use app\models\entities\ProductImage;
 use app\models\entities\User;
+use app\controllers\api\BaseApiController;
 
 /**
  * REST API контроллер изображений товаров (ProductImage)

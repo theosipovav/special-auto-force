@@ -1,12 +1,110 @@
 <?php
 
-namespace app\models\dto\response;
+namespace app\models\dtos\response;
 
+use app\models\entities\User;
 use app\models\entities\Role;
 use app\models\entities\UserRole;
 
 /**
- * DTO для ответа с данными пользователя
+ * DTO ответа с данными пользователя.
+ *
+ * @SWG\Definition(
+ *     definition="UserResponseDto",
+ *     required={
+ *         "id",
+ *         "username",
+ *         "email",
+ *         "phone",
+ *         "name",
+ *         "surname",
+ *         "date_of_registration",
+ *         "active",
+ *         "userRoles",
+ *         "roles"
+ *     },
+ *
+ *     @SWG\Property(
+ *         property="id",
+ *         type="integer",
+ *         description="Идентификатор пользователя"
+ *     ),
+ *     @SWG\Property(
+ *         property="username",
+ *         type="string",
+ *         description="Логин пользователя"
+ *     ),
+ *     @SWG\Property(
+ *         property="email",
+ *         type="string",
+ *         format="email",
+ *         description="Адрес электронной почты"
+ *     ),
+ *     @SWG\Property(
+ *         property="phone",
+ *         type="string",
+ *         description="Телефон пользователя"
+ *     ),
+ *     @SWG\Property(
+ *         property="address",
+ *         type="string",
+ *         description="Адрес пользователя"
+ *     ),
+ *     @SWG\Property(
+ *         property="name",
+ *         type="string",
+ *         description="Имя"
+ *     ),
+ *     @SWG\Property(
+ *         property="surname",
+ *         type="string",
+ *         description="Фамилия"
+ *     ),
+ *     @SWG\Property(
+ *         property="patronymic",
+ *         type="string",
+ *         description="Отчество"
+ *     ),
+ *     @SWG\Property(
+ *         property="date_of_birth",
+ *         type="string",
+ *         format="date",
+ *         description="Дата рождения"
+ *     ),
+ *     @SWG\Property(
+ *         property="image",
+ *         type="string",
+ *         format="uri",
+ *         description="Ссылка на изображение пользователя"
+ *     ),
+ *     @SWG\Property(
+ *         property="date_of_registration",
+ *         type="string",
+ *         format="date-time",
+ *         description="Дата регистрации"
+ *     ),
+ *     @SWG\Property(
+ *         property="active",
+ *         type="boolean",
+ *         description="Активен ли пользователь"
+ *     ),
+ *     @SWG\Property(
+ *         property="userRoles",
+ *         type="array",
+ *         description="Связи пользователя с ролями",
+ *         @SWG\Items(
+ *             ref="#/definitions/UserRole"
+ *         )
+ *     ),
+ *     @SWG\Property(
+ *         property="roles",
+ *         type="array",
+ *         description="Роли пользователя",
+ *         @SWG\Items(
+ *             ref="#/definitions/Role"
+ *         )
+ *     )
+ * )
  */
 class UserResponseDto
 {
@@ -71,6 +169,32 @@ class UserResponseDto
         $this->active = $active;
         $this->userRoles = $userRoles;
         $this->roles = $roles;
+    }
+
+    /**
+     * Создать DTO из модели пользователя.
+     *
+     * @param User $user
+     * @return static
+     */
+    public static function fromUser(User $user): self
+    {
+        return new self(
+            $user->id,
+            $user->username,
+            $user->email,
+            $user->phone,
+            $user->address,
+            $user->name,
+            $user->surname,
+            $user->patronymic,
+            $user->date_of_birth,
+            $user->imageEntity ? $user->imageEntity->url : null,
+            $user->date_of_registration,
+            $user->status === User::STATUS_ACTIVE,
+            $user->userRoles,   // массив объектов UserRole
+            $user->roles        // массив объектов Role
+        );
     }
 
     /**

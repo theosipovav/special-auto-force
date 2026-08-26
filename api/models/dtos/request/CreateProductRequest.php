@@ -4,28 +4,60 @@ namespace app\models\dtos\request;
 
 use Yii;
 use yii\base\Model;
-use app\models\entities\Product;
-use app\models\entities\ProductImage;
-use app\models\entities\ProductCategory;
 
 /**
  * DTO для создания/обновления товара.
+ *
+ * @SWG\Definition(
+ *     definition="CreateProductRequest",
+ *     required={"title", "shortDescription", "longDescription"},
+ *
+ *     @SWG\Property(property="title", type="string", maxLength=255, description="Название товара"),
+ *     @SWG\Property(property="article", type="string", maxLength=255, description="Артикул товара"),
+ *     @SWG\Property(property="shortDescription", type="string", description="Краткое описание товара"),
+ *     @SWG\Property(property="longDescription", type="string", description="Подробное описание товара"),
+ *     @SWG\Property(property="info", type="string", description="Дополнительная информация"),
+ *     @SWG\Property(property="price", type="number", format="float", minimum=0, description="Цена товара"),
+ *     @SWG\Property(property="inStock", type="boolean", description="Наличие товара на складе"),
+ *     @SWG\Property(property="ordersCount", type="integer", description="Количество заказов"),
+ *     @SWG\Property(property="manufacturer", type="string", maxLength=255, description="Производитель"),
+ *     @SWG\Property(property="country", type="string", maxLength=255, description="Страна производства"),
+ *     @SWG\Property(
+ *         property="categoryIds",
+ *         type="array",
+ *         description="Идентификаторы категорий",
+ *         @SWG\Items(type="integer")
+ *     ),
+ *     @SWG\Property(
+ *         property="images",
+ *         type="array",
+ *         description="Массив изображений товара (одно из них должно быть с isMain=true)",
+ *         @SWG\Items(ref="#/definitions/FormFileImageDto")
+ *     )
+ * )
  */
 class CreateProductRequest extends Model
 {
-    public $title;
-    public $article;
-    public $shortDescription;
-    public $longDescription;
-    public $info;
-    public $price;
-    public $inStock;          // может быть true/false, 1/0
-    public $ordersCount;
-    public $mainImage;
-    public $manufacturer;
-    public $country;
-    public $categoryIds = [];
-    public $images = [];
+    public string $title;
+    public string $article = '';
+    public string $shortDescription;
+    public string $longDescription;
+    public string $info = '';
+    
+    public ?float $price = null;
+    public bool $inStock = false;
+    public int $ordersCount = 0;
+    
+    public string $manufacturer = '';
+    public string $country = '';
+    
+    public array $categoryIds = [];
+
+    /**
+     * Массив объектов FormFileImageDto
+     * @var FormFileImageDto[]
+     */
+    public array $images = [];
 
     public function rules()
     {
@@ -37,129 +69,53 @@ class CreateProductRequest extends Model
             [['inStock'], 'boolean'],
             [['ordersCount'], 'integer'],
             [['categoryIds'], 'each', 'rule' => ['integer']],
-            [['images'], 'each', 'rule' => ['safe']],
-            [['mainImage'], 'safe'],
+            [['images'], 'validateImages'],
         ];
     }
 
-    public function createProduct()
+    /**
+     * Кастомный валидатор для массива изображений
+     */
+    public function validateImages($attribute, $params)
     {
-        $transaction = Yii::$app->db->beginTransaction();
-        try {
-            $product = new Product();
-            $product->title = $this->title;
-            $product->article = $this->article;
-            $product->short_description = $this->shortDescription;
-            $product->long_description = $this->longDescription;
-            $product->info = $this->info;
-            $product->price = $this->price;
-            $product->in_stock = (int) $this->inStock;  // true -> 1, false -> 0
-            $product->orders_count = (int) $this->ordersCount;
-            $product->manufacturer = $this->manufacturer;
-            $product->country = $this->country;
+        if (!is_array($this->$attribute)) {
+            $this->addError($attribute, 'Поле images должно быть массивом.');
+            return;
+        }
 
-            // Сохраняем главное изображение
-            $mainImagePath = $this->saveImageFromBase64($this->mainImage, 'main');
-            if ($mainImagePath !== null) {
-                $product->main_image = $mainImagePath;
+        $mainImagesCount = 0;
+        
+        foreach ($this->$attribute as $index => $imageDto) {
+            // Если пришел ассоциативный массив вместо объекта, преобразуем его
+            if (is_array($imageDto)) {
+                $dto = new FormFileImageDto();
+                $dto->load($imageDto, '');
+                $this->{$attribute}[$index] = $dto;
+                $imageDto = $dto;
             }
 
-            if (!$product->save()) {
-                throw new \Exception('Ошибка сохранения товара: ' . json_encode($product->getErrors()));
+            if (!$imageDto instanceof FormFileImageDto) {
+                $this->addError($attribute, "Элемент images[$index] имеет неверный формат.");
+                continue;
             }
 
-            // Сохраняем дополнительные изображения
-            foreach ($this->images as $imgData) {
-                $imagePath = $this->saveImageFromBase64($imgData ?? '', 'gallery');
-                if ($imagePath === null) {
-                    continue;
-                }
-                $productImage = new ProductImage();
-                $productImage->product_id = $product->id;
-                $productImage->title = $imgData['title'] ?? '';
-                $productImage->image = $imagePath;
-
-
-                if (!$productImage->save()) {
-                    Yii::error('Ошибка сохранения изображения галереи: ' . print_r($productImage->getErrors(), true), __METHOD__);
-                    throw new \Exception('Ошибка сохранения изображения галереи: ' . json_encode($productImage->getErrors()));
-                }
-            }
-
-            // Сохраняем категории
-            if (!empty($this->categoryIds)) {
-                foreach ($this->categoryIds as $catId) {
-                    $pc = new ProductCategory();
-                    $pc->product_id = $product->id;
-                    $pc->category_id = (int) $catId;
-                    if (!$pc->save()) {
-                        throw new \Exception('Ошибка привязки категории ' . $catId);
+            // Валидируем сам DTO
+            if (!$imageDto->validate()) {
+                foreach ($imageDto->getErrors() as $attr => $errors) {
+                    foreach ($errors as $error) {
+                        $this->addError($attribute, "Ошибка в images[$index].$attr: $error");
                     }
                 }
             }
 
-            $transaction->commit();
-            return $product;
-        } catch (\Exception $e) {
-            $transaction->rollBack();
-            Yii::error($e->getMessage(), __METHOD__);
-            return null;
-        }
-    }
-
-    private function saveImageFromBase64($imgData)
-    {
-        // Обработка разных форматов входных данных
-        if (is_array($imgData)) {
-            $title = $imgData['title'] ?? '';
-            $base64Data = $imgData['image'] ?? '';
-        } else {
-            $title = 'image';
-            $base64Data = $imgData;
-        }
-
-        if (empty($base64Data)) {
-            return null;
-        }
-
-        // Всегда удаляем префикс data:image/...;base64,
-        if (preg_match('/^data:image\/(\w+);base64,/', $base64Data, $matches)) {
-            $extension = $matches[1];
-            $base64Data = substr($base64Data, strpos($base64Data, ',') + 1);
-        } else {
-            // Если префикса нет, берём расширение из title или ставим png
-            $extension = pathinfo($title, PATHINFO_EXTENSION);
-            if (empty($extension)) {
-                $extension = 'png';
+            if (!empty($imageDto->isMain)) {
+                $mainImagesCount++;
             }
         }
 
-        $decoded = base64_decode($base64Data);
-        if ($decoded === false) {
-            Yii::error('Ошибка декодирования base64', __METHOD__);
-            return null;
+        if ($mainImagesCount > 1) {
+            $this->addError($attribute, 'Может быть только одно главное изображение (isMain = true).');
         }
-
-        // Генерация уникального имени (UUID)
-        $uuid = str_replace('-', '', generateUUID());
-        $fileName = $uuid . '.' . $extension;
-
-        $uploadPath = Yii::getAlias('@webroot/web/uploads/products/');
-        if (!is_dir($uploadPath)) {
-            if (!mkdir($uploadPath, 0777, true) && !is_dir($uploadPath)) {
-                Yii::error('Не удалось создать папку: ' . $uploadPath, __METHOD__);
-                return null;
-            }
-        }
-
-        $fullPath = $uploadPath . $fileName;
-        if (file_put_contents($fullPath, $decoded) === false) {
-            Yii::error('Не удалось записать файл: ' . $fullPath, __METHOD__);
-            return null;
-        }
-
-        // Генерация URL для доступа (с учётом baseUrl /api)
-        return "/api/web/uploads/products/" . $fileName;
-        // return Yii::$app->urlManager->createUrl('uploads/products/' . $fileName);
     }
+
 }

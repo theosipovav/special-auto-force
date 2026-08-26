@@ -2,6 +2,41 @@
 
 namespace app\models\dtos\response;
 
+/**
+ * Ответ авторизации пользователя.
+ *
+ * @SWG\Definition(
+ *     definition="SigninResponsDto",
+ *     required={
+ *         "token",
+ *         "tokenType",
+ *         "expiresIn",
+ *         "user"
+ *     },
+ *
+ *     @SWG\Property(
+ *         property="token",
+ *         type="string",
+ *         description="JWT токен доступа"
+ *     ),
+ *     @SWG\Property(
+ *         property="tokenType",
+ *         type="string",
+ *         example="Bearer",
+ *         description="Тип токена"
+ *     ),
+ *     @SWG\Property(
+ *         property="expiresIn",
+ *         type="integer",
+ *         description="Время жизни токена в секундах"
+ *     ),
+ *     @SWG\Property(
+ *         property="user",
+ *         ref="#/definitions/UserResponseDto",
+ *         description="Данные авторизованного пользователя"
+ *     )
+ * )
+ */
 class SigninResponsDto
 {
     public $token;

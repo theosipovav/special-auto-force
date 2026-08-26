@@ -1,6 +1,6 @@
 <?php
 
-namespace app\controllers\api;
+namespace app\controllers\api\admin;
 
 use Yii;
 use yii\filters\auth\HttpBearerAuth;
@@ -10,6 +10,7 @@ use app\models\entities\CustomerRequest;
 use app\models\entities\Product;
 use app\models\entities\Parameter;
 use app\models\entities\User;
+use app\controllers\api\BaseApiController;
 
 /**
  * REST API контроллер заявок клиентов (CustomerRequest)

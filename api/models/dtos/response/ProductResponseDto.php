@@ -1,9 +1,90 @@
 <?php
 
-namespace app\models\dto\response;
+namespace app\models\dtos\response;
 
 /**
- * DTO для ответа с данными товара
+ * DTO ответа с данными товара.
+ *
+ * @SWG\Definition(
+ *     definition="ProductResponseDto",
+ *     required={
+ *         "id",
+ *         "title",
+ *         "short_description",
+ *         "long_description",
+ *         "price",
+ *         "in_stock",
+ *         "images",
+ *         "created_at"
+ *     },
+ *
+ *     @SWG\Property(
+ *         property="id",
+ *         type="integer",
+ *         description="Идентификатор товара"
+ *     ),
+ *     @SWG\Property(
+ *         property="title",
+ *         type="string",
+ *         description="Название товара"
+ *     ),
+ *     @SWG\Property(
+ *         property="short_description",
+ *         type="string",
+ *         description="Краткое описание товара"
+ *     ),
+ *     @SWG\Property(
+ *         property="long_description",
+ *         type="string",
+ *         description="Подробное описание товара"
+ *     ),
+ *     @SWG\Property(
+ *         property="info",
+ *         type="string",
+ *         description="Дополнительная информация"
+ *     ),
+ *     @SWG\Property(
+ *         property="article",
+ *         type="string",
+ *         description="Артикул / заводской код"
+ *     ),
+ *     @SWG\Property(
+ *         property="price",
+ *         type="number",
+ *         format="float",
+ *         description="Цена товара"
+ *     ),
+ *     @SWG\Property(
+ *         property="in_stock",
+ *         type="integer",
+ *         enum={0, 1},
+ *         description="Наличие на складе: 1 - в наличии, 0 - под заказ"
+ *     ),
+ *     @SWG\Property(
+ *         property="images",
+ *         type="array",
+ *         description="Изображения товара",
+ *         @SWG\Items(
+ *             ref="#/definitions/ProductImageResponseDto"
+ *         )
+ *     ),
+ *     @SWG\Property(
+ *         property="manufacturer",
+ *         type="string",
+ *         description="Производитель"
+ *     ),
+ *     @SWG\Property(
+ *         property="country",
+ *         type="string",
+ *         description="Страна производства"
+ *     ),
+ *     @SWG\Property(
+ *         property="created_at",
+ *         type="string",
+ *         format="date-time",
+ *         description="Дата создания"
+ *     )
+ * )
  */
 class ProductResponseDto
 {

@@ -8,7 +8,81 @@ use app\models\entities\User;
 use app\models\entities\Role;
 
 /**
- * Форма регистрации пользователя в REST API
+ * Форма регистрации пользователя.
+ *
+ * @SWG\Definition(
+ *     definition="SignupForm",
+ *     required={
+ *         "userName",
+ *         "password",
+ *         "email",
+ *         "phone",
+ *         "name",
+ *         "surname"
+ *     },
+ *
+ *     @SWG\Property(
+ *         property="userName",
+ *         type="string",
+ *         maxLength=64,
+ *         description="Логин пользователя"
+ *     ),
+ *     @SWG\Property(
+ *         property="password",
+ *         type="string",
+ *         format="password",
+ *         minLength=6,
+ *         description="Пароль"
+ *     ),
+ *     @SWG\Property(
+ *         property="email",
+ *         type="string",
+ *         format="email",
+ *         description="Адрес электронной почты"
+ *     ),
+ *     @SWG\Property(
+ *         property="phone",
+ *         type="string",
+ *         maxLength=32,
+ *         description="Номер телефона"
+ *     ),
+ *     @SWG\Property(
+ *         property="address",
+ *         type="string",
+ *         maxLength=255,
+ *         description="Адрес пользователя"
+ *     ),
+ *     @SWG\Property(
+ *         property="name",
+ *         type="string",
+ *         maxLength=64,
+ *         description="Имя"
+ *     ),
+ *     @SWG\Property(
+ *         property="surname",
+ *         type="string",
+ *         maxLength=64,
+ *         description="Фамилия"
+ *     ),
+ *     @SWG\Property(
+ *         property="patronymic",
+ *         type="string",
+ *         maxLength=64,
+ *         description="Отчество"
+ *     ),
+ *     @SWG\Property(
+ *         property="dateOfBirth",
+ *         type="string",
+ *         format="date",
+ *         description="Дата рождения"
+ *     ),
+ *     @SWG\Property(
+ *         property="image",
+ *         type="string",
+ *         maxLength=255,
+ *         description="Ссылка на изображение пользователя"
+ *     )
+ * )
  */
 class SignupForm extends Model
 {
