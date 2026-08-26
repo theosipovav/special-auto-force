@@ -3,7 +3,6 @@
 namespace app\controllers\api\admin;
 
 use Yii;
-use yii\data\ActiveDataProvider;
 use yii\web\NotFoundHttpException;
 use yii\web\ServerErrorHttpException;
 use yii\web\UnprocessableEntityHttpException;

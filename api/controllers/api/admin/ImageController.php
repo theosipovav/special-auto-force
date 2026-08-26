@@ -92,7 +92,7 @@ class ImageController extends BaseApiAdminController
      */
     public function actionCreate()
     {
-        $this->checkAccess('create');
+        $this->checkAccess();
         $uploadedFile = \yii\web\UploadedFile::getInstanceByName('file');
         if (!$uploadedFile) {
             throw new BadRequestHttpException('Файл не передан.');
@@ -127,7 +127,7 @@ class ImageController extends BaseApiAdminController
      */
     public function actionDelete(int $id)
     {
-        $this->checkAccess('delete');
+        $this->checkAccess();
         $image = ImageEntity::findOne($id);
         if (!$image) {
             throw new NotFoundHttpException("Изображение не найдено.");

@@ -12,90 +12,51 @@ use app\models\entities\RoleEntity;
  *
  * @SWG\Definition(
  *     definition="SignupForm",
- *     required={
- *         "userName",
- *         "password",
- *         "email",
- *         "phone",
- *         "name",
- *         "surname"
- *     },
+ *     required={"userName", "password", "email", "phone", "name", "surname"},
  *
- *     @SWG\Property(
- *         property="userName",
- *         type="string",
- *         maxLength=64,
- *         description="Логин пользователя"
- *     ),
- *     @SWG\Property(
- *         property="password",
- *         type="string",
- *         format="password",
- *         minLength=6,
- *         description="Пароль"
- *     ),
- *     @SWG\Property(
- *         property="email",
- *         type="string",
- *         format="email",
- *         description="Адрес электронной почты"
- *     ),
- *     @SWG\Property(
- *         property="phone",
- *         type="string",
- *         maxLength=32,
- *         description="Номер телефона"
- *     ),
- *     @SWG\Property(
- *         property="address",
- *         type="string",
- *         maxLength=255,
- *         description="Адрес пользователя"
- *     ),
- *     @SWG\Property(
- *         property="name",
- *         type="string",
- *         maxLength=64,
- *         description="Имя"
- *     ),
- *     @SWG\Property(
- *         property="surname",
- *         type="string",
- *         maxLength=64,
- *         description="Фамилия"
- *     ),
- *     @SWG\Property(
- *         property="patronymic",
- *         type="string",
- *         maxLength=64,
- *         description="Отчество"
- *     ),
- *     @SWG\Property(
- *         property="dateOfBirth",
- *         type="string",
- *         format="date",
- *         description="Дата рождения"
- *     ),
- *     @SWG\Property(
- *         property="image",
- *         type="string",
- *         maxLength=255,
- *         description="Ссылка на изображение пользователя"
- *     )
+ *     @SWG\Property(property="userName", type="string", maxLength=64, description="Логин пользователя"),
+ *     @SWG\Property(property="password", type="string", format="password", minLength=6, description="Пароль"),
+ *     @SWG\Property(property="email", type="string", format="email", description="Адрес электронной почты"),
+ *     @SWG\Property(property="phone", type="string", maxLength=32, description="Номер телефона"),
+ *     @SWG\Property(property="address", type="string", maxLength=255, description="Адрес пользователя"),
+ *     @SWG\Property(property="name", type="string", maxLength=64, description="Имя"),
+ *     @SWG\Property(property="surname", type="string", maxLength=64, description="Фамилия"),
+ *     @SWG\Property(property="patronymic", type="string", maxLength=64, description="Отчество"),
+ *     @SWG\Property(property="dateOfBirth", type="string", format="date", description="Дата рождения"),
  * )
  */
 class SignupForm extends Model
 {
-    public $userName;
-    public $password;
-    public $email;
-    public $phone;
-    public $address;
-    public $name;
-    public $surname;
-    public $patronymic;
-    public $dateOfBirth;
-    public $image;
+    /** Логин пользователя */
+    public string $userName;
+
+    /** Пароль */
+    public string $password;
+
+    /** Пароль (повтор) */
+    public string $passwordRepeat;
+    
+    /** Адрес электронной почты */
+    public ?string $email;
+    
+    /** Номер телефона */
+    public ?string $phone;
+    
+    /** Адрес пользователя */
+    public ?string $address;
+    
+    /** Имя */
+    public string $name;
+    
+    /** Фамилия */
+    public string$surname;
+    
+    /** Отчество */
+    public ?string $patronymic;
+    
+    /** Дата рождения */
+    public ?string $dateOfBirth;
+    
 
     public function rules()
     {
@@ -108,7 +69,6 @@ class SignupForm extends Model
             ['password', 'string', 'min' => 6, 'message' => 'Минимальная длина пароля - 6 символов'],
             [['userName', 'name', 'surname', 'patronymic'], 'string', 'max' => 64],
             [['phone'], 'string', 'max' => 32],
-            [['address', 'image'], 'string', 'max' => 255],
             [['dateOfBirth'], 'safe'],
         ];
     }
@@ -128,7 +88,6 @@ class SignupForm extends Model
         $user->patronymic = $this->patronymic;
         $user->address = $this->address;
         $user->date_of_birth = $this->dateOfBirth;
-        $user->image = $this->image ?: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400';
         $user->setPassword($this->password);
         $user->generateAuthKey();
         $user->status = UserEntity::STATUS_ACTIVE;

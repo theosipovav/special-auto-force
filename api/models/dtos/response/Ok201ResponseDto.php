@@ -9,28 +9,16 @@ namespace app\models\dtos\response;
  *     definition="Ok201ResponseDto",
  *     required={"message"},
  *
- *     @SWG\Property(
- *         property="message",
- *         type="string",
- *         description="Текст сообщения"
- *     ),
- *     @SWG\Property(
- *         property="data",
- *         type="object",
- *         description="Содержимое ответа"
- *     )
+ *     @SWG\Property(property="message", type="string", description="Текст сообщения"),
+ *     @SWG\Property(property="data", type="object", description="Содержимое ответа")
  * )
  */
 class Ok201ResponseDto
 {
-    /**
-     * Текст сообщения
-     */
+    /** Текст сообщения */
     public $message;
 
-    /**
-     * Содержимое
-     */
+    /** Содержимое */
     public $data;
 
 

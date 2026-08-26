@@ -2,102 +2,80 @@
 
 namespace app\controllers\api;
 
-use Yii;
-use yii\filters\auth\HttpBearerAuth;
-use yii\web\ForbiddenHttpException;
-use yii\web\NotFoundHttpException;
 use yii\data\ActiveDataProvider;
 use app\models\entities\CategoryEntity;
-use app\models\entities\UserEntity;
+use app\models\dtos\response\CategoryResponseDto;
+use Yii;
 
 /**
- * REST API контроллер категорий (CategoryEntity)
+ * Публичный REST API контроллер категорий (витрина магазина).
+ *
+ * Все методы доступны без авторизации любому пользователю.
+ * Возвращает данные в виде CategoryResponseDto.
+ *
+ * @SWG\Tag(
+ *     name="public / category controller",
+ *     description="Публичная витрина категорий товаров."
+ * )
  */
 class CategoryController extends BaseApiController
 {
     public $modelClass = CategoryEntity::class;
 
-    public function behaviors()
-    {
-        $behaviors = parent::behaviors();
-
-        // Protect write operations
-        $behaviors['authenticator'] = [
-            'class' => HttpBearerAuth::class,
-            'only' => ['create', 'update', 'delete'],
-        ];
-
-        return $behaviors;
-    }
-
+    /**
+     * Отключаем стандартные CRUD-действия родителя (create/update/delete/view),
+     * так как витрина предоставляет только чтение.
+     */
     public function actions()
     {
-        $actions = parent::actions();
+        return [];
+    }
 
-        // Default list pagination & sorting
-        $actions['index']['prepareDataProvider'] = function () {
-            return new ActiveDataProvider([
-                'query' => CategoryEntity::find(),
-                'pagination' => [
-                    'pageSize' => 50,
-                ],
-                'sort' => [
-                    'defaultOrder' => ['id' => SORT_ASC],
-                ],
-            ]);
-        };
 
-        return $actions;
+
+    /**
+     * Список всех категорий продукции.
+     *
+     * @SWG\Get(
+     *     path="/categories",
+     *     tags={"public / category controller"},
+     *     operationId="publicCategoryIndex",
+     *     summary="Список всех категорий",
+     *     description="Возвращает плоский список всех категорий товаров с изображениями. Сортировка по возрастанию ID.",
+     *     produces={"application/json"},
+     *
+     *     @SWG\Parameter(name="q", in="query", type="string", description="Поиск по названию категории"),
+     *     @SWG\Response(response=200, description="Успешный ответ", @SWG\Schema(type="array", @SWG\Items(ref="#/definitions/CategoryResponseDto")))
+     * )
+     */
+    public function actionIndex()
+    {
+        $query = CategoryEntity::find()->with(['imageEntity']);
+
+        // Поиск по названию (опционально)
+        $search = Yii::$app->request->get('q');
+        if (!empty($search)) {
+            $query->andFilterWhere(['like', 'title', $search]);
+        }
+
+        $categories = $query->orderBy(['id' => SORT_ASC])->all();
+
+        $items = array_map(
+            fn(CategoryEntity $c) => $this->buildCategoryResponseDto($c)->toArray(),
+            $categories
+        );
+
+        return $items;
     }
 
     /**
-     * GET /api/categories/{id}/products
-     * Получить все товары в данной категории с пагинацией (~50 товаров на страницу)
+     * Формирует CategoryResponseDto для категории с учётом связанного изображения.
+     *
+     * @param CategoryEntity $category
+     * @return CategoryResponseDto
      */
-    public function actionProducts($id)
+    private function buildCategoryResponseDto(CategoryEntity $category): CategoryResponseDto
     {
-        $category = CategoryEntity::findOne($id);
-        if (!$category) {
-            throw new NotFoundHttpException("Категория #{$id} не найдена.");
-        }
-
-        $query = $category->getProducts();
-
-        $inStockOnly = Yii::$app->request->get('inStock');
-        if ($inStockOnly !== null && ($inStockOnly === '1' || $inStockOnly === 'true')) {
-            $query->andWhere(['in_stock' => 1]);
-        }
-
-        $sortParam = Yii::$app->request->get('sort', 'id_desc');
-        $order = ['id' => SORT_DESC];
-        if ($sortParam === 'price_asc') {
-            $order = ['price' => SORT_ASC];
-        } elseif ($sortParam === 'price_desc') {
-            $order = ['price' => SORT_DESC];
-        } elseif ($sortParam === 'popular') {
-            $order = ['id' => SORT_DESC];
-        }
-
-        return new ActiveDataProvider([
-            'query' => $query,
-            'pagination' => [
-                'pageSize' => 50, // Постраничный вывод по ~50 позиций
-            ],
-            'sort' => [
-                'defaultOrder' => $order,
-            ],
-        ]);
-    }
-
-    public function checkAccess($action, $model = null, $params = [])
-    {
-        if (in_array($action, ['create', 'update', 'delete'])) {
-
-            /** @var UserEntity $currentUser */
-            $currentUser = Yii::$app->user->identity;
-            if (!$currentUser || (!$currentUser->hasRole('admin') && !$currentUser->hasRole('Администратор'))) {
-                throw new ForbiddenHttpException('Доступ разрешен только администраторам.');
-            }
-        }
+        return CategoryResponseDto::create($category, $category->imageEntity);
     }
 }

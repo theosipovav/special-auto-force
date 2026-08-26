@@ -39,23 +39,4 @@ abstract class BaseApiController extends ActiveController
         return $behaviors;
     }
 
-    /*
-    protected function applyBearerAuth(array $onlyActions = [])
-    {
-        return [
-            'authenticator' => [
-                'class' => CompositeAuth::class,
-                'only' => $onlyActions,
-                'authMethods' => [
-                    HttpBearerAuth::class,
-                    [
-                        'class' => QueryParamAuth::class,
-                        'tokenParam' => 'access_token',
-                    ],
-                ],
-            ],
-        ];
-    }
-    */
-
 }

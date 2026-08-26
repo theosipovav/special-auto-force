@@ -43,13 +43,11 @@ class m260820_112032_init extends Migration
             'surname' => $this->string(64)->notNull(),
             'patronymic' => $this->string(64),
             'date_of_birth' => $this->date(),
-            'image_id' => $this->integer(),
             'date_of_registration' => $this->dateTime()->notNull(),
             'auth_key' => $this->string(32),
             'access_token' => $this->text(),
             'status' => $this->smallInteger()->notNull()->defaultValue(10),
         ], $tableOptions);
-        $this->addForeignKey('fk-user-image_id', '{{%user}}', 'image_id', '{{%image}}', 'id', 'SET NULL', 'CASCADE');
 
         // 4. Таблица "user_role"
         $this->createTable('{{%user_role}}', [
@@ -104,18 +102,19 @@ class m260820_112032_init extends Migration
         $this->addForeignKey('fk-product_image-product_id', '{{%product_image}}', 'product_id', '{{%product}}', 'id', 'CASCADE', 'CASCADE');
         $this->addForeignKey('fk-product_image-image_id', '{{%product_image}}', 'image_id', '{{%image}}', 'id', 'CASCADE', 'CASCADE');
 
-        // 9. Таблица "request" (CustomerRequestEntity)
-        $this->createTable('{{%request}}', [
+        // 9. Таблица "customer_request" (CustomerRequestEntity)
+        $this->createTable('{{%customer_request}}', [
             'id' => $this->primaryKey(),
             'product_id' => $this->integer(),
-            'phone' => $this->string(32)->notNull(),
-            'email' => $this->string(191)->notNull(),
+            'phone' => $this->string(32),
+            'email' => $this->string(191),
             'wishlist' => $this->text(),
             'created_at' => $this->dateTime()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),
+            'updated_at' => $this->dateTime()->notNull()->defaultExpression('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
             'status' => $this->string(32)->notNull()->defaultValue('new'),
             'admin_notes' => $this->text(),
         ], $tableOptions);
-        $this->addForeignKey('fk-request-product_id', '{{%request}}', 'product_id', '{{%product}}', 'id', 'SET NULL', 'CASCADE');
+        $this->addForeignKey('fk-customer_request-product_id', '{{%customer_request}}', 'product_id', '{{%product}}', 'id', 'SET NULL', 'CASCADE');
 
         // 10. Таблица "page"
         $this->createTable('{{%page}}', [
@@ -152,8 +151,8 @@ class m260820_112032_init extends Migration
 
         $this->dropTable('{{%page}}');
 
-        $this->dropForeignKey('fk-request-product_id', '{{%request}}');
-        $this->dropTable('{{%request}}');
+        $this->dropForeignKey('fk-customer_request-product_id', '{{%customer_request}}');
+        $this->dropTable('{{%customer_request}}');
 
         $this->dropForeignKey('fk-product_category-product_id', '{{%product_category}}');
         $this->dropForeignKey('fk-product_category-category_id', '{{%product_category}}');
@@ -172,7 +171,6 @@ class m260820_112032_init extends Migration
         $this->dropForeignKey('fk-user_role-role_id', '{{%user_role}}');
         $this->dropTable('{{%user_role}}');
 
-        $this->dropForeignKey('fk-user-image_id', '{{%user}}');
         $this->dropTable('{{%user}}');
 
         $this->dropTable('{{%image}}');

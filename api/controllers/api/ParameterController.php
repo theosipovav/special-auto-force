@@ -3,51 +3,94 @@
 namespace app\controllers\api;
 
 use Yii;
-use yii\filters\auth\HttpBearerAuth;
-use yii\web\ForbiddenHttpException;
+use yii\web\NotFoundHttpException;
 use app\models\entities\ParameterEntity;
-use app\models\entities\UserEntity;
+use app\models\entities\ParameterResponseDto;
 
 /**
- * REST API контроллер параметров сайта (ParameterEntity)
+ * Публичный REST API контроллер параметров сайта.
+ *
+ * Все методы доступны без авторизации любому пользователю.
+ * Предоставляет доступ к системным параметрам сайта (настройки, контакты и т.д.).
+ *
+ * @SWG\Tag(
+ *     name="public / parameter controller",
+ *     description="Публичный доступ к параметрам сайта."
+ * )
  */
 class ParameterController extends BaseApiController
 {
     public $modelClass = ParameterEntity::class;
 
-    public function behaviors()
+    /**
+     * Отключаем стандартные CRUD-действия родителя (create/update/delete/view),
+     * так как публичный контроллер предоставляет только чтение.
+     */
+    public function actions()
     {
-        $behaviors = parent::behaviors();
-
-        // Write operations protected with Bearer Auth
-        $behaviors['authenticator'] = [
-            'class' => HttpBearerAuth::class,
-            'only' => ['create', 'update', 'delete'],
-        ];
-
-        return $behaviors;
+        return [];
     }
 
     /**
-     * GET /api/parameters/map
-     * Получить словарь всех параметров сайта в виде ассоциативного массива [code => value]
+     * Получить словарь всех параметров сайта.
+     *
+     * @SWG\Get(
+     *     path="/parameters",
+     *     tags={"public / parameter controller"},
+     *     operationId="publicParameterIndex",
+     *     summary="Словарь всех параметров сайта",
+     *     description="Возвращает ассоциативный массив всех параметров в формате [code => value]. Если у параметра отсутствует code, в качестве ключа используется title.",
+     *     produces={"application/json"},
+     *
+     *     @SWG\Response(response=200, description="Успешный ответ", @SWG\Schema(type="object", description="Ассоциативный массив параметров [code => value]", additionalProperties=@SWG\Property(type="string")))
+     * )
      */
-    public function actionMap()
+    public function actionIndex()
     {
-        return [
-            'success' => true,
-            'data' => ParameterEntity::getMap(),
-        ];
+        Yii::$app->response->statusCode = 200;
+        return ParameterEntity::getMap();
     }
 
-    public function checkAccess($action, $model = null, $params = [])
+    /**
+     * Получить параметр по его системному коду.
+     *
+     * @SWG\Get(
+     *     path="/parameters/find-by-code",
+     *     tags={"public / parameter controller"},
+     *     operationId="publicParameterFindByCode",
+     *     summary="Получить параметр по коду",
+     *     description="Возвращает параметр сайта по его системному коду в виде ParameterResponseDto.",
+     *     produces={"application/json"},
+     *
+     *     @SWG\Parameter(name="code", in="query", type="string", required=true, description="Системный код параметра"),
+     *
+     *     @SWG\Response(response=200, description="Успешный ответ", @SWG\Schema(ref="#/definitions/ParameterResponseDto")),
+     *     @SWG\Response(response=400, description="Не указан параметр code"),
+     *     @SWG\Response(response=404, description="Параметр с указанным кодом не найден")
+     * )
+     */
+    public function actionFindByCode()
     {
-        if (in_array($action, ['create', 'update', 'delete'])) {
-            /** @var UserEntity $currentUser */
-            $currentUser = Yii::$app->user->identity;
-            if (!$currentUser || (!$currentUser->hasRole('admin') && !$currentUser->hasRole('Администратор'))) {
-                throw new ForbiddenHttpException('Доступ разрешен только администраторам.');
-            }
+        $code = Yii::$app->request->get('code');
+
+        if (empty($code)) {
+            Yii::$app->response->statusCode = 400;
+            return [
+                'success' => false,
+                'message' => 'Не указан обязательный параметр "code".',
+            ];
         }
+
+        /** @var ParameterEntity|null $parameter */
+        $parameter = ParameterEntity::find()
+            ->where(['code' => $code])
+            ->one();
+
+        if (!$parameter) {
+            throw new NotFoundHttpException("Параметр с кодом '{$code}' не найден.");
+        }
+
+        Yii::$app->response->statusCode = 200;
+        return ParameterResponseDto::createFromEntity($parameter)->toArray();
     }
 }

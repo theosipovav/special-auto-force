@@ -45,23 +45,24 @@ return [
     'POST   admin/product/<id:\d+>/sync-images' => '/api/admin/product/sync-images',
     'POST   admin/product/<id:\d+>/sync-categories' => '/api/admin/product/sync-categories',
     'DELETE admin/product/<id:\d+>' => '/api/admin/product/delete',
-
-
-    // --- CRUD (RESTful) ---
-    [
-        'class' => 'yii\rest\UrlRule',
-        'controller' => [
-            'users' => 'api/user',
-            'roles' => 'api/role',
-            'categories' => 'api/category',
-            'admin/products' => 'api/admin/product',
-            'product-images' => 'api/product-image',
-            'parameters' => 'api/parameter',
-            'requests' => 'api/request',
-        ],
-        'pluralize' => false,
-        'extraPatterns' => [
-            'OPTIONS <action>' => 'options',
-        ],
-    ],
+    // === Заявки =====================
+    'GET    /admin/requests' => 'api/admin/request/index',
+    'GET    /admin/request/<id:\d+>' => 'api/admin/request/view',
+    'PUT    /admin/request/<id:\d+>' => 'api/admin/request/update',
+    'DELETE /admin/request/<id:\d+>' => 'api/admin/request/delete',
+    'POST   /admin/request/<id:\d+>/set-processing' => 'api/admin/request/set-processing',
+    'POST   /admin/request/<id:\d+>/set-completed' => 'api/admin/request/set-completed',
+    'POST   /admin/request/<id:\d+>/set-cancelled' => 'api/admin/request/set-cancelled',
+    // === Роли ========================
+    'GET /admin/roles' => 'api/admin/role/index',
+    // === Пользователи ================
+    'GET /admin/users' => 'api/admin/user/index',
+    'GET /admin/user/<id:\d+>' => 'api/admin/user/view',
+    'DELETE /admin/user/<id:\d+>' => 'api/admin/user/delete',
+    'POST /admin/user' => 'api/admin/user/create',
+    'PUT /admin/user/<id:\d+>' => 'api/admin/user/update',
+    'POST /admin/user/<id:\d+>/password-set' => 'api/admin/user/password-set',
+    'POST /admin/user/<id:\d+>/disabled' => 'api/admin/user/disabled',
+    'POST /admin/user/<id:\d+>/assign-role' => 'api/admin/user/assign-role',
+    'DELETE /admin/user/<id:\d+>/roles/<roleId:\d+>' => 'api/admin/user/revoke-role'
 ];

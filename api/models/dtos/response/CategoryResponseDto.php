@@ -60,7 +60,7 @@ class CategoryResponseDto
      * @param ImageEntity $image Изображение
      * @return CategoryResponseDto
      */
-    public static function create(CategoryEntity $category, ImageEntity $image): self
+    public static function create(CategoryEntity $category, ?ImageEntity $image): self
     {
         return new CategoryResponseDto(
             (int) $category->id,

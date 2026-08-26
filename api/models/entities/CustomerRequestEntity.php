@@ -7,15 +7,28 @@ use yii\db\ActiveRecord;
 
 /**
  * Модель сущности "Заявка клиента"
+ * 
+ * @SWG\Definition(definition="CustomerRequestEntity", required={"id", "product_id", "created_at", "updated_at", "status"},
+ *     @SWG\Property(property="id", type="integer", description="Идентификатор записи"),
+ *     @SWG\Property(property="product_id", type="integer", description="Идентификатор продукции"),
+ *     @SWG\Property(property="phone", type="string", description="Телефон"),
+ *     @SWG\Property(property="email", type="string", description="Адрес электронной почты"),
+ *     @SWG\Property(property="wishlist", type="string", description="Пожелания / Текст заявки"),
+ *     @SWG\Property(property="created_at", type="string", format="date-time", description="Дата создания"),
+ *     @SWG\Property(property="updated_at", type="string", format="date-time", description="Дата последнего обновления"),
+ *     @SWG\Property(property="status", type="string", description="Статус"),
+ *     @SWG\Property(property="admin_notes", type="string", description="Служебные заметки"),
+ * )
  *
- * @property int $id Id
- * @property int|null $product_id ProductId
- * @property string $phone Телефон (Phone)
- * @property string $email Адрес электронной почты (Email)
- * @property string|null $wishlist Пожелания / Текст заявки (Wishlist)
- * @property string $created_at Дата создания (CreatedAt)
+ * @property int $id Идентификатор записи
+ * @property int $product_id Идентификатор продукции
+ * @property string|null $phone Телефон
+ * @property string|null $email Адрес электронной почты
+ * @property string|null $wishlist Пожелания / Текст заявки
+ * @property string $created_at Дата создания
+ * @property string $updated_at Дата последнего обновления
  * @property string $status Статус (new, processing, completed, cancelled)
- * @property string|null $admin_notes Служебные заметки менеджера
+ * @property string|null $admin_notes Служебные заметки
  *
  * @property ProductEntity|null $product
  */
@@ -28,13 +41,13 @@ class CustomerRequestEntity extends ActiveRecord
 
     public static function tableName()
     {
-        return '{{%request}}';
+        return '{{%customer_request}}';
     }
 
     public function rules()
     {
         return [
-            [['phone', 'email'], 'required', 'message' => 'Поле "{attribute}" обязательно для заполнения'],
+            [['product_id', 'status'], 'required', 'message' => 'Поле "{attribute}" обязательно для заполнения'],
             ['email', 'email', 'message' => 'Некорректный формат адреса электронной почты'],
             [['product_id'], 'integer'],
             [['wishlist', 'admin_notes'], 'string'],
@@ -51,13 +64,14 @@ class CustomerRequestEntity extends ActiveRecord
     {
         return [
             'id' => 'Идентификатор записи',
-            'product_id' => 'Товар',
+            'product_id' => 'Идентификатор продукции',
             'phone' => 'Телефон',
-            'email' => 'Электронная почта',
-            'wishlist' => 'Пожелания к заказу / Текст',
+            'email' => 'Адрес электронной почты',
+            'wishlist' => 'Пожелания / Текст заявки',
             'created_at' => 'Дата создания',
-            'status' => 'Статус обработки',
-            'admin_notes' => 'Заметки администратора',
+            'updated_at' => 'Дата последнего обновления',
+            'status' => 'Статус',
+            'admin_notes' => 'Служебные заметки',
         ];
     }
 
@@ -73,6 +87,7 @@ class CustomerRequestEntity extends ActiveRecord
             'email',
             'wishlist',
             'createdAt' => 'created_at',
+            'updatedAt' => 'updated_at',
             'status',
             'adminNotes' => 'admin_notes',
             'product' => function () {
@@ -95,8 +110,14 @@ class CustomerRequestEntity extends ActiveRecord
     public function beforeSave($insert)
     {
         if (parent::beforeSave($insert)) {
-            if ($this->isNewRecord && empty($this->created_at)) {
-                $this->created_at = date('Y-m-d H:i:s');
+            $now = date('Y-m-d H:i:s');
+            if ($this->isNewRecord) {
+                if (empty($this->created_at)) {
+                    $this->created_at = $now;
+                }
+                $this->updated_at = $this->created_at;
+            } else {
+                $this->updated_at = $now;
             }
             return true;
         }
