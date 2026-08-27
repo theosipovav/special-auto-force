@@ -259,9 +259,12 @@ class CategoryController extends BaseApiAdminController
      */
     private function buildCategoryResponseDto(CategoryEntity $category): CategoryResponseDto
     {
-        $category->refresh();
-
+        $category = CategoryEntity::find()
+            ->where(['id' => $category->id])
+            ->with(['imageEntity', 'productCategories'])
+            ->one();
         $image = $category->imageEntity;
-        return CategoryResponseDto::create($category, $image);
+        $productsCount = count($category->productCategories);
+        return CategoryResponseDto::create($category, $image, $productsCount);
     }
 }

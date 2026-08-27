@@ -130,7 +130,7 @@ class ProductController extends BaseApiController
     {
         $product = ProductEntity::find()
             ->where(['id' => $id])
-            ->with(['categories.imageEntity', 'productImages.imageEntity'])
+            ->with(['categories.imageEntity', 'categories.productCategories', 'productImages.imageEntity'])
             ->one();
 
         if (!$product) {
@@ -345,9 +345,13 @@ class ProductController extends BaseApiController
         );
 
         $categoryDtos = array_map(
-            fn($category) => CategoryResponseDto::create($category, $category->imageEntity),
-            $product->categories
-        );
+        fn($category) => CategoryResponseDto::create(
+            $category, 
+            $category->imageEntity, 
+            count($category->productCategories)
+        ),
+        $product->categories
+    );
 
         return ProductResponseDto::createFromProduct($product, $productImageDtos, $categoryDtos);
     }

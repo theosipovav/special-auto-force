@@ -567,8 +567,12 @@ class ProductController extends BaseApiAdminController
         );
 
         $categoryDtos = [];
-        foreach ($product->getCategories()->with('imageEntity')->all() as $category) {
-            $categoryDtos[] = CategoryResponseDto::create($category, $category->imageEntity);
+        foreach ($product->getCategories()->with(['imageEntity', 'productCategories'])->all() as $category) {
+            $categoryDtos[] = CategoryResponseDto::create(
+                $category,
+                $category->imageEntity,
+                count($category->productCategories) // ← Количество товаров
+            );
         }
 
         return ProductResponseDto::createFromProduct($product, $productImageDtos, $categoryDtos);

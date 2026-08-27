@@ -52,7 +52,7 @@ class CategoryController extends BaseApiController
      */
     public function actionIndex()
     {
-        $query = CategoryEntity::find()->with(['imageEntity']);
+        $query = CategoryEntity::find()->with(['imageEntity','productCategories']);
 
         // Поиск по названию (опционально)
         $search = Yii::$app->request->get('q');
@@ -63,7 +63,7 @@ class CategoryController extends BaseApiController
         $categories = $query->orderBy(['id' => SORT_ASC])->all();
         
         $items = array_map(
-            fn(CategoryEntity $c) => CategoryResponseDto::create($c, $c->imageEntity)->toArray(),
+            fn(CategoryEntity $c) => CategoryResponseDto::create($c, $c->imageEntity, count($c->productCategories))->toArray(),
             $categories
         );
 
