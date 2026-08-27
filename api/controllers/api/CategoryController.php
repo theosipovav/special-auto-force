@@ -61,9 +61,9 @@ class CategoryController extends BaseApiController
         }
 
         $categories = $query->orderBy(['id' => SORT_ASC])->all();
-
+        
         $items = array_map(
-            fn(CategoryEntity $c) => $this->buildCategoryResponseDto($c)->toArray(),
+            fn(CategoryEntity $c) => CategoryResponseDto::create($c, $c->imageEntity)->toArray(),
             $categories
         );
 
@@ -124,19 +124,6 @@ class CategoryController extends BaseApiController
             $products
         );
     }
-
-
-    /**
-     * Формирует CategoryResponseDto для категории с учётом связанного изображения.
-     *
-     * @param CategoryEntity $category
-     * @return CategoryResponseDto
-     */
-    private function buildCategoryResponseDto(CategoryEntity $category): CategoryResponseDto
-    {
-        return CategoryResponseDto::create($category, $category->imageEntity);
-    }
-
 
     /**
      * Формирует ProductShortResponseDto для товара.

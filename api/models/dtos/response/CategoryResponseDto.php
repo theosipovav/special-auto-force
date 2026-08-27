@@ -16,7 +16,8 @@ use app\models\entities\ImageEntity;
  *     @SWG\Property(property="title", type="string", description="Название категории"),
  *     @SWG\Property(property="description", type="string", description="Описание категории"),
  *     @SWG\Property(property="imageUrl", type="string", description="Сылка на изображение категории, url"),
- *     @SWG\Property(property="imageId", type="integer", description="Идентификатор изображегния, url"),
+ *     @SWG\Property(property="imageId", type="integer", description="Идентификатор изображения, url"),
+ *     @SWG\Property(property="productsCount", type="integer", description="Количество продукции в категории, url"),
  * )
  */
 class CategoryResponseDto
@@ -26,14 +27,16 @@ class CategoryResponseDto
     public ?string $description;
     public ?string $imageUrl;
     public ?int $imageId;
+    public int $productsCount = 10;
 
-    public function __construct(int $id, string $title, ?string $description = null, ?string $imageUrl = null, ?int $imageId = null)
+    public function __construct(int $id, string $title, ?string $description = null, ?string $imageUrl = null, ?int $imageId = null, ?int $productsCount)
     {
         $this->id = $id;
         $this->title = $title;
         $this->description = $description;
         $this->imageUrl = $imageUrl;
         $this->imageId = $imageId;
+        $this->productsCount = $productsCount ?? 0;
     }
 
     /**
@@ -47,6 +50,7 @@ class CategoryResponseDto
             'description' => $this->description,
             'imageUrl' => $this->imageUrl,
             'imageId' => $this->imageId,
+            'productsCount' => $this->productsCount,
         ];
     }
 
@@ -58,16 +62,18 @@ class CategoryResponseDto
      *
      * @param CategoryEntity $category Категория
      * @param ImageEntity $image Изображение
+     * @param int $productsCount Количество продукции в категории
      * @return CategoryResponseDto
      */
-    public static function create(CategoryEntity $category, ?ImageEntity $image): self
+    public static function create(CategoryEntity $category, ?ImageEntity $image, ?int $productsCount): self
     {
         return new CategoryResponseDto(
             (int) $category->id,
             (string) $category->title,
             $category->description,
             $image->url ?? null,
-            $image->id ?? null
+            $image->id ?? null,
+            $productsCount,
         );
     }
 }

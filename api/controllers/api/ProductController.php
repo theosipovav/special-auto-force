@@ -365,6 +365,6 @@ class ProductController extends BaseApiController
         );
 
         // Передаем пустой массив вместо categoryDtos, так как они не используются в Short DTO
-        return ProductShortResponseDto::createFromProduct($product, $productImageDtos, [], $product->categories);
+        return ProductShortResponseDto::createFromProduct($product, $productImageDtos, $product->categories);
     }
 }
