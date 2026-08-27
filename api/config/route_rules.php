@@ -11,27 +11,26 @@ return [
 
     'GET hello' => 'api/site/hello',
 
+
+    // = ПУБЛИЧНЫЕ ====================
     // --- Аутентификация ---
     'POST auth/login' => 'api/auth/login',
     'POST auth/signup' => 'api/auth/signup',
     'GET auth/me' => 'api/auth/me',
     'POST auth/refresh' => 'api/auth/refresh',
-
-
-    // --- Продукция ---
-    'GET products'           => 'api/product/index',
-    'GET products/latest'    => 'api/product/latest',
-    'GET products/popular'   => 'api/product/popular',
-    'GET products/search'    => 'api/product/search',
-
-    'GET categories/<id:\d+>/products' => 'api/category/products',
-    'GET categories/tree' => 'api/category/tree',
-
-
-    'GET parameters/map' => 'api/parameter/map',
+    // === Параметры сайта ============
+    'GET parameters' => 'api/parameter/index',
+    'GET parameter/find-by-code/<code>' => 'api/parameter/find-by-code',
+    // === Категории ==================
+    'GET categories' => 'api/category/index',
+    // === Продукция ==================
+    'GET products/latest'  => 'api/product/latest',
+    'GET products/popular' => 'api/product/popular',
+    'GET products/search'  => 'api/product/search',
+    'GET products'         => 'api/product/index',
 
     // = ПАНЕЛЬ АДМИНИСТРИРОВАНИЯ =====
-    // === Изображегия ================
+    // === Изображения ================
     'GET    admin/images' => 'api/admin/image/index',
     'POST   admin/image' => 'api/admin/image/create',
     'DELETE admin/image/<id:\d+>' => 'api/admin/image/delete',
@@ -64,5 +63,16 @@ return [
     'POST /admin/user/<id:\d+>/password-set' => 'api/admin/user/password-set',
     'POST /admin/user/<id:\d+>/disabled' => 'api/admin/user/disabled',
     'POST /admin/user/<id:\d+>/assign-role' => 'api/admin/user/assign-role',
-    'DELETE /admin/user/<id:\d+>/roles/<roleId:\d+>' => 'api/admin/user/revoke-role'
+    'DELETE /admin/user/<id:\d+>/roles/<roleId:\d+>' => 'api/admin/user/revoke-role',
+    // === Параметры сайта ============
+    'GET admin/parameters' => 'api/admin/parameter/index',
+    'GET admin/parameters/<id:\d+>' => 'api/admin/parameter/view',
+    'PUT admin/parameters/<id:\d+>' => 'api/admin/parameter/update',
+    'PATCH admin/parameters/<id:\d+>' => 'api/admin/parameter/update',
+    'DELETE admin/parameters/<id:\d+>' => 'api/admin/parameter/delete',
+    'OPTIONS admin/parameters' => 'api/admin/parameter/options',
+    'OPTIONS admin/parameters/<id:\d+>' => 'api/admin/parameter/options',
+
+
+
 ];

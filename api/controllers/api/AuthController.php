@@ -14,14 +14,20 @@ use app\models\dtos\request\SignupForm;
 use app\models\entities\UserEntity;
 use yii\web\ServerErrorHttpException;
 use yii\web\NotFoundHttpException;
+use yii\web\UnprocessableEntityHttpException;
 use yii\web\UnauthorizedHttpException;
 
 /**
- * Контроллер аутентификации и профиля пользователя (JWT REST API)
- * 
+ * Публичный REST API контроллер аутентификации и профиля пользователя (JWT REST API).
+ *
+ * @SWG\Tag(
+ *     name="public / auth controller",
+ *     description="Аутентификация, регистрация и управление профилем пользователя."
+ * )
  */
 class AuthController extends Controller
 {
+    
     public function behaviors()
     {
         $behaviors = parent::behaviors();
@@ -50,115 +56,61 @@ class AuthController extends Controller
     }
 
     /**
+     * Авторизация пользователя.
+     *
      * @SWG\Post(
      *     path="/auth/login",
-     *     tags={"Auth"},
+     *     tags={"public / auth controller"},
+     *     operationId="authLogin",
      *     summary="Авторизация пользователя",
-     *     description="Вход в систему по логину/email и паролю с получением JWT токена",
+     *     description="Вход в систему по логину/email и паролю с получением JWT токена.",
      *     produces={"application/json"},
      *     consumes={"application/json"},
-     *     @SWG\Parameter(
-     *         name="body",
-     *         in="body",
-     *         required=true,
-     *         @SWG\Schema(
-     *             required={"username", "password"},
-     *             @SWG\Property(property="username", type="string", description="Логин или E-mail пользователя", example="user@example.com"),
-     *             @SWG\Property(property="password", type="string", format="password", description="Пароль пользователя", example="password123")
-     *         )
-     *     ),
-     *     @SWG\Response(
-     *         response=200,
-     *         description="Успешный вход",
-     *         @SWG\Schema(
-     *             @SWG\Property(property="token", type="string", description="JWT токен доступа"),
-     *             @SWG\Property(property="tokenType", type="string", description="Тип токена", example="Bearer"),
-     *             @SWG\Property(property="expiresIn", type="integer", description="Время жизни токена в секундах", example=604800),
-     *             @SWG\Property(property="user", type="object", description="Данные пользователя")
-     *         )
-     *     ),
-     *     @SWG\Response(
-     *         response=404,
-     *         description="Пользователь не найден",
-     *     ),
-     *     @SWG\Response(
-     *         response=401,
-     *         description="Неверный пароль",
-     *     ),
-     *     @SWG\Response(
-     *         response=500,
-     *         description="Ошибка сервера",
-     *     ),
+     *
+     *     @SWG\Parameter(name="body", in="body", required=true, @SWG\Schema(ref="#/definitions/LoginForm")),
+     *
+     *     @SWG\Response(response=200, description="Успешный вход", @SWG\Schema(ref="#/definitions/SigninResponsDto")),
+     *     @SWG\Response(response=422, description="Ошибка валидации (неверный логин/пароль или аккаунт заблокирован)"),
+     *     @SWG\Response(response=500, description="Ошибка сервера")
      * )
      */
     public function actionLogin()
-    {
+       {
         $model = new LoginForm();
         $model->load(Yii::$app->request->getBodyParams(), '');
 
-        // 1. Проверяем обязательные поля (username и password)
         if (!$model->validate()) {
-            throw new ServerErrorHttpException('Проверьте правильность заполнения данных и повторите запрос.');
+            $errorString = json_encode($model->getErrors(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            Yii::error('Ошибка валидации LoginForm: ' . $errorString, __METHOD__);
+            throw new UnprocessableEntityHttpException('Ошибка валидации: ' . $errorString);
         }
 
-        // 2. Ищем пользователя по username или email
-        $user = UserEntity::find()
-            ->where(['username' => $model->username])
-            ->orWhere(['email' => $model->username])
-            ->one();
-
-        if (!$user) {
-            throw new NotFoundHttpException('Пользователь не найден');
-        }
-
-        // 3. Проверяем пароль
-        if (!$user->validatePassword($model->password)) {
-            throw new UnauthorizedHttpException('Введен не верный пароль.');
-        }
-
-        // 4. Успех – генерируем токен
+        /** @var UserEntity $user */
+        $user = $model->getUser();
         $token = $user->generateAccessToken();
         $expiresIn = Yii::$app->params['jwtExpire'] ?? (86400 * 7);
 
         Yii::$app->response->statusCode = 200;
-        $res = new SigninResponsDto($token, 'Bearer', $expiresIn, $user->toArray());
-        return $res;
+        return new SigninResponsDto($token, 'Bearer', $expiresIn, $user->toArray());
     }
 
     /**
+     * Регистрация нового пользователя.
+     *
      * @SWG\Post(
      *     path="/auth/signup",
-     *     tags={"Auth"},
+     *     tags={"public / auth controller"},
+     *     operationId="authSignup",
      *     summary="Регистрация нового пользователя",
-     *     description="Создание нового пользователя с автоматической авторизацией и выдачей JWT токена",
+     *     description="Создание нового пользователя с автоматической авторизацией и выдачей JWT токена. Автоматически назначается роль 'customer'.",
      *     produces={"application/json"},
      *     consumes={"application/json"},
-     *     @SWG\Parameter(
-     *         name="body",
-     *         in="body",
-     *         required=true,
-     *         @SWG\Schema(
-     *             required={"userName", "password", "email", "phone", "name", "surname"},
-     *             @SWG\Property(property="userName", type="string", description="Логин пользователя", example="newuser"),
-     *             @SWG\Property(property="password", type="string", format="password", description="Пароль (минимум 6 символов)", example="password123"),
-     *             @SWG\Property(property="email", type="string", format="email", description="E-mail адрес", example="user@example.com"),
-     *             @SWG\Property(property="phone", type="string", description="Телефон", example="+79991234567"),
-     *             @SWG\Property(property="name", type="string", description="Имя", example="Иван"),
-     *             @SWG\Property(property="surname", type="string", description="Фамилия", example="Иванов"),
-     *             @SWG\Property(property="patronymic", type="string", description="Отчество", example="Иванович"),
-     *             @SWG\Property(property="dateOfBirth", type="string", format="date", description="Дата рождения", example="1990-01-01"),
-     *             @SWG\Property(property="address", type="string", description="Адрес", example="г. Москва, ул. Ленина 1")
-     *         )
-     *     ),
-     *     @SWG\Response(
-     *         response=200,
-     *         description="Успешная регистрация",
-     *         @SWG\Schema(ref="#/definitions/SigninResponsDto")
-     *     ),
-     *     @SWG\Response(
-     *         response=500,
-     *         description="Ошибка при регистрации",
-     *     )
+     *
+     *     @SWG\Parameter(name="body", in="body", required=true, @SWG\Schema(ref="#/definitions/SignupForm")),
+     *
+     *     @SWG\Response(response=200, description="Успешная регистрация", @SWG\Schema(ref="#/definitions/SigninResponsDto")),
+     *     @SWG\Response(response=422, description="Ошибка валидации данных (логин/email занят, пароли не совпадают и т.д.)"),
+     *     @SWG\Response(response=500, description="Ошибка при регистрации")
      * )
      */
     public function actionSignup()
@@ -177,22 +129,19 @@ class AuthController extends Controller
     }
 
     /**
+     * Получить данные текущего пользователя.
+     *
      * @SWG\Get(
      *     path="/auth/me",
-     *     tags={"Auth"},
+     *     tags={"public / auth controller"},
+     *     operationId="authMe",
      *     summary="Получить данные текущего пользователя",
      *     description="Возвращает информацию об авторизованном пользователе. Требуется JWT токен.",
      *     produces={"application/json"},
      *     security={{"Bearer":{}}},
-     *     @SWG\Response(
-     *         response=200,
-     *         description="Данные пользователя",
-     *         @SWG\Schema(ref="#/definitions/UserResponseDto")
-     *     ),
-     *     @SWG\Response(
-     *         response=401,
-     *         description="Пользователь не авторизован",
-     *     )
+     *
+     *     @SWG\Response(response=200, description="Данные пользователя", @SWG\Schema(ref="#/definitions/UserEntity")),
+     *     @SWG\Response(response=401, description="Пользователь не авторизован")
      * )
      */
     public function actionMe()
@@ -206,22 +155,19 @@ class AuthController extends Controller
     }
 
     /**
+     * Обновить JWT токен.
+     *
      * @SWG\Post(
      *     path="/auth/refresh",
-     *     tags={"Auth"},
+     *     tags={"public / auth controller"},
+     *     operationId="authRefresh",
      *     summary="Обновить JWT токен",
      *     description="Обновление токена авторизации для текущего пользователя. Требуется действительный JWT токен.",
      *     produces={"application/json"},
-     *     security={{"bearerAuth":{}}},
-     *     @SWG\Response(
-     *         response=200,
-     *         description="Новый токен",
-     *         @SWG\Schema(ref="#/definitions/SigninResponsDto")
-     *     ),
-     *     @SWG\Response(
-     *         response=401,
-     *         description="Пользователь не авторизован",
-     *     )
+     *     security={{"Bearer":{}}},
+     *
+     *     @SWG\Response(response=200, description="Новый токен", @SWG\Schema(ref="#/definitions/SigninResponsDto")),
+     *     @SWG\Response(response=401, description="Пользователь не авторизован")
      * )
      */
     public function actionRefresh()
@@ -236,24 +182,4 @@ class AuthController extends Controller
         return new SigninResponsDto($newToken, 'Bearer', $expiresIn, $user->toArray());
     }
 
-    /**
-     * @SWG\Options(
-     *     path="/auth/options",
-     *     tags={"Auth"},
-     *     summary="CORS preflight запрос",
-     *     description="Обработка OPTIONS запроса для CORS",
-     *     produces={"application/json"},
-     *     @SWG\Response(
-     *         response=200,
-     *         description="OK",
-     *         @SWG\Schema(
-     *             @SWG\Property(property="status", type="string", example="ok")
-     *         )
-     *     )
-     * )
-     */
-    public function actionOptions()
-    {
-        return ['status' => 'ok'];
-    }
 }

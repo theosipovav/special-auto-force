@@ -11,9 +11,9 @@ use yii\base\Model;
  *     definition="UserRequestDto",
  *     type="object",
  *     description="DTO для создания и обновления пользователя",
- *     required={"userName", "password", "passwordRepeat", "name", "surname"},
+ *     required={"userтame", "password", "passwordRepeat", "name", "surname"},
  *
- *     @SWG\Property(property="userName", type="string", description="Логин пользователя", example="ivanov_ii"),
+ *     @SWG\Property(property="userтame", type="string", description="Логин пользователя", example="ivanov_ii"),
  *     @SWG\Property(property="password", type="string", description="Пароль (обязателен при создании, опционален при обновлении)", example="secret123"),
  *     @SWG\Property(property="passwordRepeat", type="string", description="Повтор пароля", example="secret123"),
  *     @SWG\Property(property="email", type="string", format="email", description="Адрес электронной почты", example="ivanov@example.com"),
@@ -35,7 +35,7 @@ class UserRequestDto extends Model
     const SCENARIO_UPDATE = 'update';
 
     /** Логин пользователя */
-    public ?string $userName = null;
+    public ?string $userтame = null;
 
     /** Пароль */
     public ?string $password = null;
@@ -71,8 +71,8 @@ class UserRequestDto extends Model
     public function scenarios()
     {
         $scenarios = parent::scenarios();
-        $scenarios[self::SCENARIO_CREATE] = ['userName', 'password', 'passwordRepeat', 'email', 'phone', 'address', 'name', 'surname', 'patronymic', 'dateOfBirth'];
-        $scenarios[self::SCENARIO_UPDATE] = ['userName', 'password', 'passwordRepeat', 'email', 'phone', 'address', 'name', 'surname', 'patronymic', 'dateOfBirth', 'status'];
+        $scenarios[self::SCENARIO_CREATE] = ['userтame', 'password', 'passwordRepeat', 'email', 'phone', 'address', 'name', 'surname', 'patronymic', 'dateOfBirth'];
+        $scenarios[self::SCENARIO_UPDATE] = ['userтame', 'password', 'passwordRepeat', 'email', 'phone', 'address', 'name', 'surname', 'patronymic', 'dateOfBirth', 'status'];
         return $scenarios;
     }
 
@@ -80,21 +80,21 @@ class UserRequestDto extends Model
     {
         return [
             // Обязательные поля при создании
-            [['userName', 'password', 'passwordRepeat', 'name', 'surname'], 'required', 'on' => self::SCENARIO_CREATE],
+            [['userтame', 'password', 'passwordRepeat', 'name', 'surname'], 'required', 'on' => self::SCENARIO_CREATE],
             
             // Обязательные поля при обновлении (пароль опционален)
-            [['userName', 'name', 'surname'], 'required', 'on' => self::SCENARIO_UPDATE],
+            [['userтame', 'name', 'surname'], 'required', 'on' => self::SCENARIO_UPDATE],
             
             // Пароль при обновлении — если передан, то обязательны оба поля
             [['passwordRepeat'], 'required', 'when' => function ($model) {
                 return !empty($model->password);
             }, 'whenClient' => "function (attribute, value) { return $('#userrequestdto-password').val() !== ''; }"],
             
-            [['userName', 'email'], 'trim'],
-            ['userName', 'string', 'max' => 64],
+            [['userтame', 'email'], 'trim'],
+            ['userтame', 'string', 'max' => 64],
             ['email', 'email', 'message' => 'Некорректный формат адреса электронной почты'],
             [['dateOfBirth'], 'date', 'format' => 'php:Y-m-d'],
-            [['userName', 'name', 'surname', 'patronymic'], 'string', 'max' => 64],
+            [['userтame', 'name', 'surname', 'patronymic'], 'string', 'max' => 64],
             [['phone'], 'string', 'max' => 32],
             [['address'], 'string', 'max' => 255],
             ['password', 'string', 'min' => 6, 'message' => 'Пароль должен содержать минимум 6 символов', 'skipOnEmpty' => true],
@@ -107,7 +107,7 @@ class UserRequestDto extends Model
     public function attributeLabels()
     {
         return [
-            'userName' => 'Логин',
+            'userтame' => 'Логин',
             'password' => 'Пароль',
             'passwordRepeat' => 'Повтор пароля',
             'email' => 'Электронная почта',

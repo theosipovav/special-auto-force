@@ -11,9 +11,9 @@ use Firebase\JWT\Key;
 /**
  * Модель сущности "Пользователь" (UserEntity)
  *
- * @SWG\Definition(definition="UserEntity", type="object", description="Модель пользователя (полное представление)", required={"id", "userName", "email", "phone", "name", "surname", "status", "datOfRegistration"},
- *     @SWG\Property(property="id", type="integer", description="ID пользователя", example=42),
- *     @SWG\Property(property="userName", type="string", description="Логин пользователя", example="ivanov_ii"),
+ * @SWG\Definition(definition="UserEntity", type="object", description="Модель пользователя (полное представление)", required={"id", "username", "email", "phone", "name", "surname", "status", "datOfRegistration"},
+ *     @SWG\Property(property="id", type="integer", description="Идентификатор пользователя", example=42),
+ *     @SWG\Property(property="username", type="string", description="Логин пользователя", example="ivanov_ii"),
  *     @SWG\Property(property="email", type="string", format="email", description="Адрес электронной почты", example="ivanov@example.com"),
  *     @SWG\Property(property="phone", type="string", description="Номер телефона", example="+7 (999) 123-45-67"),
  *     @SWG\Property(property="address", type="string", description="Адрес проживания", example="г. Москва, ул. Ленина, д. 10"),
@@ -82,17 +82,17 @@ class UserEntity extends ActiveRecord implements IdentityInterface
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
-            'username' => 'Логин (UserName)',
-            'password' => 'Пароль (Password)',
-            'email' => 'Адрес электронной почты (Email)',
-            'phone' => 'Телефон (Phone)',
-            'address' => 'Адрес (Address)',
-            'name' => 'Имя (Name)',
-            'surname' => 'Фамилия (Surname)',
-            'patronymic' => 'Отчество (Patronymic)',
-            'date_of_birth' => 'Дата рождения (DateOfBirth)',
-            'date_of_registration' => 'Дата регистрации (DatOfRegistration)',
+            'id' => 'Идентификатор',
+            'username' => 'Логин',
+            'password' => 'Пароль',
+            'email' => 'Адрес электронной почты',
+            'phone' => 'Телефон',
+            'address' => 'Адрес',
+            'name' => 'Имя',
+            'surname' => 'Фамилия',
+            'patronymic' => 'Отчество',
+            'date_of_birth' => 'Дата рождения',
+            'date_of_registration' => 'Дата регистрации',
             'status' => 'Статус аккаунта',
         ];
     }
@@ -101,7 +101,7 @@ class UserEntity extends ActiveRecord implements IdentityInterface
     {
         return [
             'id',
-            'userName' => 'username',
+            'userтame' => 'username',
             'email',
             'phone',
             'address',

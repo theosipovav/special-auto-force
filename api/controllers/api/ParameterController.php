@@ -47,41 +47,35 @@ class ParameterController extends BaseApiController
      */
     public function actionIndex()
     {
-        Yii::$app->response->statusCode = 200;
-        return ParameterEntity::getMap();
+        $rows = ParameterEntity::find()->asArray()->all();
+        $map = [];
+        foreach ($rows as $row) {
+            $key = !empty($row['code']) ? $row['code'] : $row['title'];
+            $map[$key] = $row['value'];
+        }
+        return $map;
     }
 
     /**
      * Получить параметр по его системному коду.
      *
      * @SWG\Get(
-     *     path="/parameters/find-by-code",
+     *     path="/parameter/find-by-code/{code}",
      *     tags={"public / parameter controller"},
      *     operationId="publicParameterFindByCode",
      *     summary="Получить параметр по коду",
      *     description="Возвращает параметр сайта по его системному коду в виде ParameterResponseDto.",
      *     produces={"application/json"},
      *
-     *     @SWG\Parameter(name="code", in="query", type="string", required=true, description="Системный код параметра"),
+     *     @SWG\Parameter(name="code", in="path", required=true, type="string", description="Системный код параметра"),
      *
      *     @SWG\Response(response=200, description="Успешный ответ", @SWG\Schema(ref="#/definitions/ParameterResponseDto")),
-     *     @SWG\Response(response=400, description="Не указан параметр code"),
      *     @SWG\Response(response=404, description="Параметр с указанным кодом не найден")
      * )
      */
-    public function actionFindByCode()
+    public function actionFindByCode(string $code)
     {
-        $code = Yii::$app->request->get('code');
-
-        if (empty($code)) {
-            Yii::$app->response->statusCode = 400;
-            return [
-                'success' => false,
-                'message' => 'Не указан обязательный параметр "code".',
-            ];
-        }
-
-        /** @var ParameterEntity|null $parameter */
+        // тело метода без изменений, проверка $code не нужна, т.к. он обязателен в пути
         $parameter = ParameterEntity::find()
             ->where(['code' => $code])
             ->one();

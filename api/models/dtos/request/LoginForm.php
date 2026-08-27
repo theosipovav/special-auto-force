@@ -13,31 +13,22 @@ use app\models\entities\UserEntity;
  *     definition="LoginForm",
  *     required={"username", "password"},
  *
- *     @SWG\Property(
- *         property="username",
- *         type="string",
- *         description="Логин или E-mail"
- *     ),
- *     @SWG\Property(
- *         property="password",
- *         type="string",
- *         format="password",
- *         description="Пароль"
- *     )
+ *     @SWG\Property(property="username", type="string", description="Логин или E-mail", example="user@example.com"),
+ *     @SWG\Property(property="password", type="string", format="password", description="Пароль", example="password123")
  * )
  */
 class LoginForm extends Model
 {
-    public $username;
-    public $password;
+    public string $username;
+    public string $password;
 
-    private $_user = false;
+    private ?UserEntity $_user = null;
 
     public function rules()
     {
         return [
             [['username', 'password'], 'required', 'message' => 'Поле "{attribute}" обязательно для заполнения'],
-            // ['password', 'validatePassword'],
+            ['password', 'validatePassword'],
         ];
     }
 
@@ -49,14 +40,23 @@ class LoginForm extends Model
         ];
     }
 
-    
+      /**
+     * Валидация пароля и статуса пользователя.
+     */
     public function validatePassword($attribute, $params)
     {
         if (!$this->hasErrors()) {
             /** @var UserEntity $user */
             $user = $this->getUser();
-            if (!$user || !$user->validatePassword($this->password)) {
-                $this->addError($attribute, 'Неверный логин или пароль.');
+            
+            if (!$user) {
+                $this->addError('username', 'Пользователь с таким логином или email не найден.');
+            } elseif (!$user->validatePassword($this->password)) {
+                $this->addError($attribute, 'Неверный пароль.');
+            } elseif ($user->status === UserEntity::STATUS_INACTIVE) {
+                $this->addError('username', 'Учетная запись отключена. Обратитесь к администратору.');
+            } elseif ($user->status === UserEntity::STATUS_DELETED) {
+                $this->addError('username', 'Учетная запись удалена.');
             }
         }
     }

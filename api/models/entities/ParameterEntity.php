@@ -8,10 +8,22 @@ use yii\db\ActiveRecord;
 /**
  * Модель сущности "Параметры сайта"
  *
- * @property int $id Id
- * @property string $title Название (Title)
- * @property string $value Значение (Value)
- * @property string|null $code Системный код (Code)
+ * @SWG\Definition(
+ *     definition="ParameterEntity",
+ *     type="object",
+ *     required={"id", "title", "value"},
+ *     @SWG\Property(property="id", type="integer", description="Идентификатор записи"),
+ *     @SWG\Property(property="title", type="string", description="Название параметра", maxLength=255),
+ *     @SWG\Property(property="value", type="string", description="Значение"),
+ *     @SWG\Property(property="code", type="string", description="Системный код", maxLength=64),
+ *     @SWG\Property(property="group", type="string", description="Группа параметров", maxLength=64),
+ *     @SWG\Property(property="pageId", type="integer", description="Идентификатор страницы")
+ * )
+ *
+ * @property int $id Идентификатор записи 
+ * @property string $title Название параметра
+ * @property string $value Значение
+ * @property string|null $code Системный код
  * @property string|null $group Группа параметров
  * @property int|null $pageId Идентификатор страницы
  *
@@ -40,7 +52,7 @@ class ParameterEntity extends ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
+            'id' => 'Идентификатор записи',
             'title' => 'Название параметра',
             'value' => 'Значение',
             'code' => 'Системный код',
@@ -82,19 +94,5 @@ class ParameterEntity extends ActiveRecord
             ->one();
 
         return $param ? $param->value : $default;
-    }
-
-    /**
-     * Получить карту всех параметров в виде [code => value]
-     */
-    public static function getMap(): array
-    {
-        $rows = static::find()->asArray()->all();
-        $map = [];
-        foreach ($rows as $row) {
-            $key = !empty($row['code']) ? $row['code'] : $row['title'];
-            $map[$key] = $row['value'];
-        }
-        return $map;
     }
 }

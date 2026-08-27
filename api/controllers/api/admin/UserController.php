@@ -179,9 +179,9 @@ class UserController extends BaseApiAdminController
         }
 
         // Проверка уникальности логина
-        $existingUser = UserEntity::find()->where(['username' => $dto->userName])->one();
+        $existingUser = UserEntity::find()->where(['username' => $dto->userтame])->one();
         if ($existingUser) {
-            throw new UnprocessableEntityHttpException("Пользователь с логином '{$dto->userName}' уже существует.");
+            throw new UnprocessableEntityHttpException("Пользователь с логином '{$dto->userтame}' уже существует.");
         }
 
         // Проверка уникальности email
@@ -195,7 +195,7 @@ class UserController extends BaseApiAdminController
         $transaction = Yii::$app->db->beginTransaction();
         try {
             $user = new UserEntity();
-            $user->username = $dto->userName;
+            $user->username = $dto->userтame;
             $user->email = $dto->email ?? '';
             $user->phone = $dto->phone ?? '';
             $user->name = $dto->name;
@@ -278,15 +278,15 @@ class UserController extends BaseApiAdminController
         }
 
         // Проверка уникальности логина (если меняется)
-        if ($dto->userName !== null && $dto->userName !== $user->username) {
+        if ($dto->userтame !== null && $dto->userтame !== $user->username) {
             $existingUser = UserEntity::find()
-                ->where(['username' => $dto->userName])
+                ->where(['username' => $dto->userтame])
                 ->andWhere(['!=', 'id', $user->id])
                 ->one();
             if ($existingUser) {
-                throw new UnprocessableEntityHttpException("Логин '{$dto->userName}' уже занят.");
+                throw new UnprocessableEntityHttpException("Логин '{$dto->userтame}' уже занят.");
             }
-            $user->username = $dto->userName;
+            $user->username = $dto->userтame;
         }
 
         // Проверка уникальности email (если меняется)
