@@ -154,13 +154,15 @@ class CategoryController extends BaseApiAdminController
 
             $category->title = $request->title;
             $category->description = $request->description;
-            
+
             if ($request->updateImage) {
                 $removeImage = ImageEntity::findOne($category->image_id);
-                $removeImage->DeleteLocalFile();
-                $category->image_id = null;
-                if (!$removeImage->delete()) {
-                    throw new \Exception('Не удалось удалить старое изображение: ' . json_encode($removeImage->getErrors(), JSON_UNESCAPED_UNICODE));
+                if (!empty($removeImage)) {
+                    $removeImage->DeleteLocalFile();
+                    $category->image_id = null;
+                    if (!$removeImage->delete()) {
+                        throw new \Exception('Не удалось удалить старое изображение: ' . json_encode($removeImage->getErrors(), JSON_UNESCAPED_UNICODE));
+                    }
                 }
                 if (!empty($request->base64)) {
                     $image = new ImageEntity();

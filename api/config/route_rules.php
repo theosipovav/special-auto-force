@@ -23,11 +23,13 @@ return [
     'GET parameter/find-by-code/<code>' => 'api/parameter/find-by-code',
     // === Категории ==================
     'GET categories' => 'api/category/index',
+    'GET categories/<id:\d+>/products' => 'api/category/products',
     // === Продукция ==================
     'GET products/latest'  => 'api/product/latest',
     'GET products/popular' => 'api/product/popular',
     'GET products/search'  => 'api/product/search',
     'GET products'         => 'api/product/index',
+    'GET products/<id:\d+>'  => 'api/product/view',
 
     // = ПАНЕЛЬ АДМИНИСТРИРОВАНИЯ =====
     // === Изображения ================

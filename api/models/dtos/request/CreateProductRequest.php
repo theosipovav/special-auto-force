@@ -28,7 +28,7 @@ use yii\base\Model;
 class CreateProductRequest extends Model
 {
     public string $title;
-    public string $article = '';
+    public ?string $article = '';
     public string $shortDescription;
     public string $longDescription;
     public string $info = '';

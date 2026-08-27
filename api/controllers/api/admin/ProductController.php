@@ -8,6 +8,7 @@ use app\models\entities\ProductEntity;
 use app\models\entities\ProductCategoryEntity;
 use app\models\entities\ProductImageEntity;
 use app\models\entities\ImageEntity;
+use app\models\entities\CustomerRequestEntity;
 use app\models\dtos\request\CreateProductRequest;
 use app\models\dtos\request\UpdateProductRequest;
 use app\models\dtos\response\ProductResponseDto;
@@ -146,6 +147,17 @@ class ProductController extends BaseApiAdminController
                 throw new \Exception('Не удалось сохранить продукцию: ' . json_encode($product->getErrors(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
             }
 
+
+            foreach ($request->categoryIds as $key => $categoryId) {
+                $pc = new ProductCategoryEntity();
+                $pc->product_id = $product->id;
+                $pc->category_id = $categoryId;
+                if (!$pc->save()) {
+                    throw new \Exception('Не удалось привзяать категорию: ' . json_encode($pc->getErrors(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+                }
+            }
+
+
             // Основное изображение не задно задано
             $isSetMain = false;
 
@@ -267,7 +279,7 @@ class ProductController extends BaseApiAdminController
      *     @SWG\Response(response=500, description="Ошибка синхронизации изображений")
      * )
      */
-    public function actionSyncImages($id)
+    public function actionSyncImages(int $id)
     {
         $this->checkAccess();
 
@@ -386,7 +398,6 @@ class ProductController extends BaseApiAdminController
     }
 
 
-
     /**
      * Полная синхронизация категорий товара.
      *
@@ -423,7 +434,7 @@ class ProductController extends BaseApiAdminController
      *     @SWG\Response(response=403, description="Недостаточно прав")
      * )
      */
-    public function actionSyncCategories($id)
+    public function actionSyncCategories(int $id)
     {
         $this->checkAccess();
         $product = ProductEntity::findOne($id);
@@ -473,7 +484,7 @@ class ProductController extends BaseApiAdminController
      *     @SWG\Response(response=500, description="Ошибка при удалении товара")
      * )
      */
-    public function actionDelete($id)
+    public function actionDelete(int $id)
     {
         $this->checkAccess();
 
@@ -481,23 +492,59 @@ class ProductController extends BaseApiAdminController
         if (!$product) {
             throw new yii\web\NotFoundHttpException("Товар #{$id} не найден.");
         }
-        $productImages = ProductImageEntity::find()->where(['product_id' => $product->id])->all();
-        $imageIds = array_column($productImages, 'image_id');
-        $images = ImageEntity::find()->where(['id' => $imageIds])->all();
-        // Удаляем файлы изображений
+
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            foreach ($images as $key => $image) {
-                $image->DeleteLocalFile();
+            // 1. Получаем все записи ProductImageEntity для товара
+            $productImages = ProductImageEntity::find()
+                ->where(['product_id' => $product->id])
+                ->all();
+
+            $imageIds = array_column($productImages, 'image_id');
+
+            // 2. Загружаем все ImageEntity, связанные с этим товаром
+            $images = ImageEntity::find()->where(['id' => $imageIds])->all();
+
+            // 3. Удаляем физические файлы изображений
+            foreach ($images as $image) {
+                try {
+                    $image->DeleteLocalFile();
+                } catch (\Exception $e) {
+                    // Если файл не найден – логируем, но продолжаем удаление записей
+                    Yii::warning("Не удалось удалить файл: " . $e->getMessage(), __METHOD__);
+                }
             }
+
+            // 4. Удаляем записи ProductImageEntity
+            ProductImageEntity::deleteAll(['product_id' => $product->id]);
+
+            // 5. Удаляем записи ImageEntity (если есть)
+            if (!empty($imageIds)) {
+                ImageEntity::deleteAll(['id' => $imageIds]);
+            }
+
+            // 6. Удаляем связи товара с категориями
+            ProductCategoryEntity::deleteAll(['product_id' => $product->id]);
+
+            // 7. Обновляем заявки клиентов: устанавливаем product_id = null
+            CustomerRequestEntity::updateAll(
+                ['product_id' => null],
+                ['product_id' => $product->id]
+            );
+
+            // 8. Удаляем сам товар
+            if (!$product->delete()) {
+                throw new \Exception('Не удалось удалить товар.');
+            }
+
             $transaction->commit();
+            Yii::$app->response->statusCode = 204;
+            return null;
         } catch (\Exception $e) {
             $transaction->rollBack();
             Yii::error("Ошибка при удалении товара #{$id}: " . $e->getMessage(), __METHOD__);
-            throw new ServerErrorHttpException('Ошибка при удалении товара и связанных данных.');
+            throw new yii\web\ServerErrorHttpException('Ошибка при удалении товара и связанных данных.');
         }
-        Yii::$app->response->statusCode = 204;
-        return null;
     }
 
     /**

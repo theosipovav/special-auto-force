@@ -7,14 +7,15 @@ use app\models\entities\ProductEntity;
 use app\models\entities\CustomerRequestEntity;
 use app\models\entities\ProductImageEntity;
 use app\models\dtos\response\ProductResponseDto;
+use app\models\dtos\response\ProductShortResponseDto;
 use app\models\dtos\response\ProductImageResponseDto;
 use app\models\dtos\response\CategoryResponseDto;
+use yii\web\NotFoundHttpException;
 
 /**
  * Публичный REST API контроллер товаров (витрина магазина).
  *
  * Все методы доступны без авторизации любому пользователю.
- * Возвращает данные в виде ProductResponseDto.
  *
  * @SWG\Tag(
  *     name="public / product controller",
@@ -42,7 +43,7 @@ class ProductController extends BaseApiController
      *     path="/products",
      *     tags={"public / product controller"},
      *     operationId="publicProductIndex",
-     *     summary="Список товаров",
+     *     summary="Список товаров (краткая информация)",
      *     description="Возвращает постраничный список товаров с поиском по названию/артикулу и сортировкой по цене/названию.",
      *     produces={"application/json"},
      *
@@ -55,7 +56,7 @@ class ProductController extends BaseApiController
      *
      *     @SWG\Response(response=200, description="Успешный ответ", @SWG\Schema(
      *         type="object",
-     *         @SWG\Property(property="items", type="array", @SWG\Items(ref="#/definitions/ProductResponseDto")),
+     *         @SWG\Property(property="items", type="array", @SWG\Items(ref="#/definitions/ProductShortResponseDto")),
      *         @SWG\Property(property="_links", type="object"),
      *         @SWG\Property(property="_meta", type="object")
      *     ))
@@ -63,7 +64,8 @@ class ProductController extends BaseApiController
      */
     public function actionIndex()
     {
-        $query = ProductEntity::find()->with(['categories.imageEntity', 'productImages.imageEntity']);
+        // Для краткого DTO категории не нужны, убираем их из with для оптимизации запросов
+        $query = ProductEntity::find()->with(['productImages.imageEntity']);
 
         // 1. Фильтр по категории
         $categoryId = Yii::$app->request->get('categoryId');
@@ -106,6 +108,38 @@ class ProductController extends BaseApiController
         return $this->paginate($query);
     }
 
+
+    /**
+     * Получение подробной информации о товаре по ID.
+     *
+     * @SWG\Get(
+     *     path="/products/{id}",
+     *     tags={"public / product controller"},
+     *     operationId="publicProductView",
+     *     summary="Получить товар по ID (полная информация)",
+     *     description="Возвращает детальную карточку товара со всеми изображениями и категориями.",
+     *     produces={"application/json"},
+     *
+     *     @SWG\Parameter(name="id", in="path", required=true, type="integer", description="ID товара"),
+     *
+     *     @SWG\Response(response=200, description="Успешный ответ", @SWG\Schema(ref="#/definitions/ProductResponseDto")),
+     *     @SWG\Response(response=404, description="Товар не найден")
+     * )
+     */
+    public function actionView(int $id)
+    {
+        $product = ProductEntity::find()
+            ->where(['id' => $id])
+            ->with(['categories.imageEntity', 'productImages.imageEntity'])
+            ->one();
+
+        if (!$product) {
+            throw new NotFoundHttpException("Товар #{$id} не найден.");
+        }
+
+        return $this->buildProductResponseDto($product);
+    }
+
     /**
      * Последние добавленные товары.
      *
@@ -121,19 +155,19 @@ class ProductController extends BaseApiController
      *         type="object",
      *         @SWG\Property(property="success", type="boolean"),
      *         @SWG\Property(property="count", type="integer"),
-     *         @SWG\Property(property="items", type="array", @SWG\Items(ref="#/definitions/ProductResponseDto"))
+     *         @SWG\Property(property="items", type="array", @SWG\Items(ref="#/definitions/ProductShortResponseDto"))
      *     ))
      * )
      */
     public function actionLatest()
     {
         $products = ProductEntity::find()
-            ->with(['categories.imageEntity', 'productImages.imageEntity'])
+            ->with(['productImages.imageEntity'])
             ->orderBy(['created_at' => SORT_DESC])
             ->limit(10)
             ->all();
 
-        $items = array_map(fn($p) => $this->buildProductResponseDto($p)->toArray(), $products);
+        $items = array_map(fn($p) => $this->buildProductShortResponseDto($p)->toArray(), $products);
 
         return [
             'success' => true,
@@ -157,7 +191,7 @@ class ProductController extends BaseApiController
      *         type="object",
      *         @SWG\Property(property="success", type="boolean"),
      *         @SWG\Property(property="count", type="integer"),
-     *         @SWG\Property(property="items", type="array", @SWG\Items(ref="#/definitions/ProductResponseDto"))
+     *         @SWG\Property(property="items", type="array", @SWG\Items(ref="#/definitions/ProductShortResponseDto"))
      *     ))
      * )
      */
@@ -185,10 +219,7 @@ class ProductController extends BaseApiController
         }
 
         // Загружаем товары
-        $products = ProductEntity::find()
-            ->where(['id' => $productIds])
-            ->with(['categories.imageEntity', 'productImages.imageEntity'])
-            ->all();
+        $products = ProductEntity::find()->where(['id' => $productIds])->with(['productImages.imageEntity'])->all();
 
         // Сохраняем порядок популярности (сортируем по убыванию заявок)
         $productsMap = [];
@@ -203,7 +234,7 @@ class ProductController extends BaseApiController
             }
         }
 
-        $items = array_map(fn($p) => $this->buildProductResponseDto($p)->toArray(), $sortedProducts);
+        $items = array_map(fn($p) => $this->buildProductShortResponseDto($p)->toArray(), $sortedProducts);
 
         return [
             'success' => true,
@@ -231,7 +262,7 @@ class ProductController extends BaseApiController
      *         @SWG\Property(property="success", type="boolean"),
      *         @SWG\Property(property="query", type="string"),
      *         @SWG\Property(property="total", type="integer"),
-     *         @SWG\Property(property="items", type="array", @SWG\Items(ref="#/definitions/ProductResponseDto"))
+     *         @SWG\Property(property="items", type="array", @SWG\Items(ref="#/definitions/ProductShortResponseDto"))
      *     ))
      * )
      */
@@ -242,7 +273,7 @@ class ProductController extends BaseApiController
         }
 
         $query = ProductEntity::find()
-            ->with(['categories.imageEntity', 'productImages.imageEntity'])
+            ->with(['productImages.imageEntity'])
             ->andFilterWhere([
                 'or',
                 ['like', 'title', $q],
@@ -252,7 +283,7 @@ class ProductController extends BaseApiController
         $limit = (int) Yii::$app->request->get('limit', 10);
         $products = $query->limit($limit)->all();
 
-        $items = array_map(fn($p) => $this->buildProductResponseDto($p)->toArray(), $products);
+        $items = array_map(fn($p) => $this->buildProductShortResponseDto($p)->toArray(), $products);
 
         return [
             'success' => true,
@@ -263,11 +294,7 @@ class ProductController extends BaseApiController
     }
 
     /**
-     * Формирует ответ с пагинацией и массивом ProductResponseDto.
-     *
-     * @param \yii\db\ActiveQuery $query
-     * @param int $defaultPageSize
-     * @return array
+     * Формирует ответ с пагинацией и массивом ProductShortResponseDto.
      */
     protected function paginate(\yii\db\ActiveQuery $query, int $defaultPageSize = 20): array
     {
@@ -289,7 +316,7 @@ class ProductController extends BaseApiController
 
         $items = [];
         foreach ($products as $product) {
-            $items[] = $this->buildProductResponseDto($product)->toArray();
+            $items[] = $this->buildProductShortResponseDto($product)->toArray();
         }
 
         return [
@@ -307,31 +334,37 @@ class ProductController extends BaseApiController
     }
 
     /**
-     * Формирует ProductResponseDto для товара со всеми актуальными связями.
-     *
-     * @param ProductEntity $product
-     * @return ProductResponseDto
+     * Формирует ProductResponseDto (полная карточка товара).
+     * Использует жадно загруженные связи, не делает лишних SQL-запросов.
      */
     private function buildProductResponseDto(ProductEntity $product): ProductResponseDto
     {
-        // Сбрасываем кэш связей, чтобы гарантированно загрузить актуальные данные
-        $product->refresh();
-
-        $productImages = ProductImageEntity::find()
-            ->with('imageEntity')
-            ->where(['product_id' => $product->id])
-            ->all();
-            
         $productImageDtos = array_map(
             fn(ProductImageEntity $pi) => ProductImageResponseDto::create($pi),
-            $productImages
+            $product->productImages
         );
 
-        $categoryDtos = [];
-        foreach ($product->getCategories()->with('imageEntity')->all() as $category) {
-            $categoryDtos[] = CategoryResponseDto::create($category, $category->imageEntity);
-        }
+        $categoryDtos = array_map(
+            fn($category) => CategoryResponseDto::create($category, $category->imageEntity),
+            $product->categories
+        );
 
         return ProductResponseDto::createFromProduct($product, $productImageDtos, $categoryDtos);
+    }
+    
+
+    /**
+     * Формирует ProductShortResponseDto (краткая карточка для списков).
+     * Использует жадно загруженные связи, не делает лишних SQL-запросов.
+     */
+    private function buildProductShortResponseDto(ProductEntity $product): ProductShortResponseDto
+    {
+        $productImageDtos = array_map(
+            fn(ProductImageEntity $pi) => ProductImageResponseDto::create($pi),
+            $product->productImages
+        );
+
+        // Передаем пустой массив вместо categoryDtos, так как они не используются в Short DTO
+        return ProductShortResponseDto::createFromProduct($product, $productImageDtos, [], $product->categories);
     }
 }

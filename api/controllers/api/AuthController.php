@@ -79,6 +79,7 @@ class AuthController extends Controller
         $model = new LoginForm();
         $model->load(Yii::$app->request->getBodyParams(), '');
 
+
         if (!$model->validate()) {
             $errorString = json_encode($model->getErrors(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             Yii::error('Ошибка валидации LoginForm: ' . $errorString, __METHOD__);
@@ -87,6 +88,7 @@ class AuthController extends Controller
 
         /** @var UserEntity $user */
         $user = $model->getUser();
+        
         $token = $user->generateAccessToken();
         $expiresIn = Yii::$app->params['jwtExpire'] ?? (86400 * 7);
 

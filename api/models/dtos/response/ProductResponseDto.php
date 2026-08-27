@@ -38,7 +38,7 @@ class ProductResponseDto
     public ?string $manufacturer;
     public ?string $country;
     public string $created_at;
-    public string $mainImageUrl;
+    public ?string $mainImageUrl;
     public array $otherImageUrls;
     public array $images;
     public array $categories;
@@ -72,7 +72,7 @@ class ProductResponseDto
         ?string $manufacturer,
         ?string $country,
         string $created_at,
-        string $mainImageUrl,
+        ?string $mainImageUrl,
         array $otherImageUrls,
         array $images,
         array $categories
@@ -138,6 +138,8 @@ class ProductResponseDto
                 $otherImageUrls[] = $productImageDto->url;
             }
         }
+
+
         return new ProductResponseDto(
             (int) $product->id,
             (string) $product->title,

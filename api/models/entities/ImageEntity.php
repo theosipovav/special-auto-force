@@ -51,7 +51,7 @@ class ImageEntity extends ActiveRecord
 
     public function fields()
     {
-        return ['id','title','path','url',];
+        return ['id', 'title', 'path', 'url',];
     }
 
     public function extraFields()
@@ -96,40 +96,66 @@ class ImageEntity extends ActiveRecord
      * @return bool true при успешной загрузки
      * @param string $base64Data Содержимое файла
      */
-    public function saveImageFromBase64($base64Data): bool
+    public function saveImageFromBase64(string $base64Data): bool
     {
-        if (empty($base64Data)) {
+        if ($base64Data === '') {
             throw new \Exception('Отсутствует содержимое файла (base64)');
         }
 
-        $decoded = base64_decode($base64Data);
-        if ($decoded === false) {
+        $extension = 'png';
+
+        // 1. Сначала отделяем payload от data-URI
+        if (preg_match('/^data:image\/([a-zA-Z0-9+.-]+);base64,/', $base64Data, $matches)) {
+            $extension = strtolower($matches[1]);
+            if ($extension === 'jpeg') {
+                $extension = 'jpg';
+            }
+            // svg+xml и т.п. — берём первую часть
+            if (strpos($extension, '+') !== false) {
+                $extension = explode('+', $extension)[0];
+            }
+            $base64Data = substr($base64Data, strpos($base64Data, ',') + 1);
+        } else {
+            throw new \Exception('Не удалось получить расширение файла (ожидается data:image/...;base64,...)');
+        }
+
+        // 2. Убираем пробелы/переносы, если клиент их добавил
+        $base64Data = preg_replace('/\s+/', '', $base64Data);
+
+        // 3. Декодируем уже чистый base64
+        $decoded = base64_decode($base64Data, true);
+        if ($decoded === false || $decoded === '') {
             Yii::error('Ошибка декодирования base64', __METHOD__);
             throw new \Exception('Ошибка декодирования base64');
         }
 
-        $extension = 'png';
-        if (preg_match('/^data:image\/(\w+);base64,/', $base64Data, $matches)) {
-            $extension = $matches[1];
-            if ($extension === 'jpeg') $extension = 'jpg';
-            $base64Data = substr($base64Data, strpos($base64Data, ',') + 1);
-        } else {
-            Yii::error('Не удалось получить расширения файла', __METHOD__);
-            throw new \Exception('Не удалось получить расширения файла');
+        // 4. Проверка, что это похоже на изображение
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->buffer($decoded);
+        if ($mime === false || strpos($mime, 'image/') !== 0) {
+            Yii::error('Файл не является изображением, mime=' . $mime, __METHOD__);
+            throw new \Exception('Загруженный файл не является изображением');
         }
 
-        // Генерируем уникальное имя файла
         $fileName = Yii::$app->security->generateRandomString(32) . '.' . $extension;
 
-        // Путь для сохранения (относительно @webroot)
-        $fullPath = Yii::getAlias('@webroot/web/uploads/images/') . $fileName;
+        $dir = Yii::getAlias('@webroot/web/uploads/images');
+        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
+            throw new \Exception('Не удалось создать каталог для загрузок');
+        }
+
+        $fullPath = $dir . DIRECTORY_SEPARATOR . $fileName;
+
         if (file_put_contents($fullPath, $decoded) === false) {
             Yii::error('Не удалось записать файл: ' . $fullPath, __METHOD__);
             throw new \Exception('Не удалось записать файл');
         }
+
         $this->title = $fileName;
         $this->path = $fullPath;
-        $this->url = rtrim(Yii::getAlias('@web/web'), '/') . '/uploads/images/' . $fileName;
+        // URL относительно веб-корня приложения
+        $this->url = rtrim(Yii::getAlias('@web'), '/') . '/web/uploads/images/' . $fileName;
+
         return true;
     }
 

@@ -1,0 +1,3331 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Special Auto Force API",
+        "description": "REST API on Yii2",
+        "version": "1.0.0"
+    },
+    "basePath": "/api",
+    "consumes": [
+        "application/json"
+    ],
+    "produces": [
+        "application/json"
+    ],
+    "paths": {
+        "/auth/login": {
+            "post": {
+                "tags": [
+                    "public / auth controller"
+                ],
+                "summary": "Авторизация пользователя",
+                "description": "Вход в систему по логину/email и паролю с получением JWT токена.",
+                "operationId": "authLogin",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/LoginForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный вход",
+                        "schema": {
+                            "$ref": "#/definitions/SigninResponsDto"
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации (неверный логин/пароль или аккаунт заблокирован)"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                }
+            }
+        },
+        "/auth/signup": {
+            "post": {
+                "tags": [
+                    "public / auth controller"
+                ],
+                "summary": "Регистрация нового пользователя",
+                "description": "Создание нового пользователя с автоматической авторизацией и выдачей JWT токена. Автоматически назначается роль 'customer'.",
+                "operationId": "authSignup",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SignupForm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешная регистрация",
+                        "schema": {
+                            "$ref": "#/definitions/SigninResponsDto"
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации данных (логин/email занят, пароли не совпадают и т.д.)"
+                    },
+                    "500": {
+                        "description": "Ошибка при регистрации"
+                    }
+                }
+            }
+        },
+        "/auth/me": {
+            "get": {
+                "tags": [
+                    "public / auth controller"
+                ],
+                "summary": "Получить данные текущего пользователя",
+                "description": "Возвращает информацию об авторизованном пользователе. Требуется JWT токен.",
+                "operationId": "authMe",
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Данные пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/UserEntity"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "tags": [
+                    "public / auth controller"
+                ],
+                "summary": "Обновить JWT токен",
+                "description": "Обновление токена авторизации для текущего пользователя. Требуется действительный JWT токен.",
+                "operationId": "authRefresh",
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Новый токен",
+                        "schema": {
+                            "$ref": "#/definitions/SigninResponsDto"
+                        }
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/categories": {
+            "get": {
+                "tags": [
+                    "public / category controller"
+                ],
+                "summary": "Список всех категорий",
+                "description": "Возвращает плоский список всех категорий товаров с изображениями. Сортировка по возрастанию ID.",
+                "operationId": "publicCategoryIndex",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Поиск по названию категории",
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/CategoryResponseDto"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/parameters": {
+            "get": {
+                "tags": [
+                    "public / parameter controller"
+                ],
+                "summary": "Словарь всех параметров сайта",
+                "description": "Возвращает ассоциативный массив всех параметров в формате [code => value]. Если у параметра отсутствует code, в качестве ключа используется title.",
+                "operationId": "publicParameterIndex",
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "schema": {
+                            "description": "Ассоциативный массив параметров [code => value]",
+                            "type": "object",
+                            "additionalProperties": {
+                                "description": "Получить словарь всех параметров сайта.",
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/parameter/find-by-code/{code}": {
+            "get": {
+                "tags": [
+                    "public / parameter controller"
+                ],
+                "summary": "Получить параметр по коду",
+                "description": "Возвращает параметр сайта по его системному коду в виде ParameterResponseDto.",
+                "operationId": "publicParameterFindByCode",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "path",
+                        "description": "Системный код параметра",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "schema": {
+                            "$ref": "#/definitions/ParameterResponseDto"
+                        }
+                    },
+                    "404": {
+                        "description": "Параметр с указанным кодом не найден"
+                    }
+                }
+            }
+        },
+        "/products": {
+            "get": {
+                "tags": [
+                    "public / product controller"
+                ],
+                "summary": "Список товаров (краткая информация)",
+                "description": "Возвращает постраничный список товаров с поиском по названию/артикулу и сортировкой по цене/названию.",
+                "operationId": "publicProductIndex",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "categoryId",
+                        "in": "query",
+                        "description": "Фильтр по ID категории",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "inStock",
+                        "in": "query",
+                        "description": "Фильтр по наличию на складе",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Поиск по названию (title) или артикулу (article)",
+                        "type": "string"
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Сортировка",
+                        "type": "string",
+                        "enum": [
+                            "price_asc",
+                            "price_desc",
+                            "title_asc",
+                            "title_desc"
+                        ]
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Номер страницы (по умолчанию 1)",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "per-page",
+                        "in": "query",
+                        "description": "Элементов на странице (по умолчанию 20)",
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "schema": {
+                            "properties": {
+                                "items": {
+                                    "description": "Список товаров с фильтрацией, пагинацией и сортировкой.",
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/ProductShortResponseDto"
+                                    }
+                                },
+                                "_links": {
+                                    "description": "Список товаров с фильтрацией, пагинацией и сортировкой.",
+                                    "type": "object"
+                                },
+                                "_meta": {
+                                    "description": "Список товаров с фильтрацией, пагинацией и сортировкой.",
+                                    "type": "object"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/{id}": {
+            "get": {
+                "tags": [
+                    "public / product controller"
+                ],
+                "summary": "Получить товар по ID (полная информация)",
+                "description": "Возвращает детальную карточку товара со всеми изображениями и категориями.",
+                "operationId": "publicProductView",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID товара",
+                        "required": true,
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "schema": {
+                            "$ref": "#/definitions/ProductResponseDto"
+                        }
+                    },
+                    "404": {
+                        "description": "Товар не найден"
+                    }
+                }
+            }
+        },
+        "/products/latest": {
+            "get": {
+                "tags": [
+                    "public / product controller"
+                ],
+                "summary": "Последние добавленные товары",
+                "description": "Возвращает список из 10 последних добавленных товаров (по дате created_at).",
+                "operationId": "publicProductLatest",
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "schema": {
+                            "properties": {
+                                "success": {
+                                    "description": "Последние добавленные товары.",
+                                    "type": "boolean"
+                                },
+                                "count": {
+                                    "description": "Последние добавленные товары.",
+                                    "type": "integer"
+                                },
+                                "items": {
+                                    "description": "Последние добавленные товары.",
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/ProductShortResponseDto"
+                                    }
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/popular": {
+            "get": {
+                "tags": [
+                    "public / product controller"
+                ],
+                "summary": "Самые популярные товары",
+                "description": "Возвращает список из 10 самых популярных товаров на основе заявок клиентов за последний год (12 месяцев). Отмененные заявки не учитываются.",
+                "operationId": "publicProductPopular",
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "schema": {
+                            "properties": {
+                                "success": {
+                                    "description": "Самые популярные товары.",
+                                    "type": "boolean"
+                                },
+                                "count": {
+                                    "description": "Самые популярные товары.",
+                                    "type": "integer"
+                                },
+                                "items": {
+                                    "description": "Самые популярные товары.",
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/ProductShortResponseDto"
+                                    }
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/search": {
+            "get": {
+                "tags": [
+                    "public / product controller"
+                ],
+                "summary": "Поиск товаров",
+                "description": "Быстрый поиск и автодополнение по названию (title) и артикулу (article).",
+                "operationId": "publicProductSearch",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Поисковый запрос",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Лимит результатов (по умолчанию 10)",
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "schema": {
+                            "properties": {
+                                "success": {
+                                    "description": "Быстрый поиск и автодополнение.",
+                                    "type": "boolean"
+                                },
+                                "query": {
+                                    "description": "Быстрый поиск и автодополнение.",
+                                    "type": "string"
+                                },
+                                "total": {
+                                    "description": "Быстрый поиск и автодополнение.",
+                                    "type": "integer"
+                                },
+                                "items": {
+                                    "description": "Быстрый поиск и автодополнение.",
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/ProductShortResponseDto"
+                                    }
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/category": {
+            "post": {
+                "tags": [
+                    "admin / category controller"
+                ],
+                "summary": "Создать категорию",
+                "description": "Создает новую категорию и опционально привязывает к ней изображение (Base64).",
+                "operationId": "adminCategoryCreate",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "description": "Данные новой категории.",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CategoryRequestDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Категория успешно создана",
+                        "schema": {
+                            "$ref": "#/definitions/CategoryResponseDto"
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации данных"
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован"
+                    },
+                    "403": {
+                        "description": "Недостаточно прав"
+                    },
+                    "500": {
+                        "description": "Ошибка при создании категории"
+                    }
+                }
+            }
+        },
+        "/admin/category/{id}": {
+            "put": {
+                "tags": [
+                    "admin / category controller"
+                ],
+                "summary": "Обновить категорию",
+                "description": "Обновляет поля категории и опционально её изображение.",
+                "operationId": "adminCategoryUpdate",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID категории",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "description": "Данные для обновления.",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CategoryRequestDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Категория успешно обновлена",
+                        "schema": {
+                            "$ref": "#/definitions/CategoryResponseDto"
+                        }
+                    },
+                    "404": {
+                        "description": "Категория не найдена"
+                    },
+                    "422": {
+                        "description": "Ошибка валидации данных"
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован"
+                    },
+                    "403": {
+                        "description": "Недостаточно прав"
+                    },
+                    "500": {
+                        "description": "Ошибка при обновлении категории"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "admin / category controller"
+                ],
+                "summary": "Удалить категорию",
+                "description": "Удаляет категорию, её связи с товарами и связанный файл изображения.",
+                "operationId": "adminCategoryDelete",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID категории",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Категория успешно удалена"
+                    },
+                    "404": {
+                        "description": "Категория не найдена"
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован"
+                    },
+                    "403": {
+                        "description": "Недостаточно прав"
+                    },
+                    "500": {
+                        "description": "Ошибка при удалении категории"
+                    }
+                }
+            }
+        },
+        "/admin/images": {
+            "get": {
+                "tags": [
+                    "admin / image controller"
+                ],
+                "summary": "Список изображений с фильтрацией по названию",
+                "parameters": [
+                    {
+                        "name": "title",
+                        "in": "query",
+                        "description": "Фильтр по названию (LIKE %title%)",
+                        "type": "string"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Номер страницы (по умолчанию 1)",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "per-page",
+                        "in": "query",
+                        "description": "Количество записей на странице (по умолчанию 50)",
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "schema": {
+                            "properties": {
+                                "items": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/ImageEntity"
+                                    }
+                                },
+                                "_links": {
+                                    "type": "object"
+                                },
+                                "_meta": {
+                                    "type": "object"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён (недостаточно прав)"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/admin/image": {
+            "post": {
+                "tags": [
+                    "admin / image controller"
+                ],
+                "summary": "Загрузка нового изображения",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "parameters": [
+                    {
+                        "name": "file",
+                        "in": "formData",
+                        "description": "Загружаемый файл изображения",
+                        "required": true,
+                        "type": "file"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Запись успешно создана",
+                        "schema": {
+                            "$ref": "#/definitions/ImageEntity"
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации данных или загрузки файла"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/admin/image/{id}": {
+            "delete": {
+                "tags": [
+                    "admin / image controller"
+                ],
+                "summary": "Удаление изображения",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID изображения",
+                        "required": true,
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Успешно удалено (нет содержимого)"
+                    },
+                    "404": {
+                        "description": "Изображение не найдено"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/admin/parameters": {
+            "get": {
+                "tags": [
+                    "admin / parameter controller"
+                ],
+                "summary": "Список параметров",
+                "description": "Список параметров с пагинацией и фильтрами по group, code, pageId и общим поиском.",
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "query",
+                        "description": "Фильтр по группе",
+                        "type": "string"
+                    },
+                    {
+                        "name": "code",
+                        "in": "query",
+                        "description": "Фильтр по системному коду",
+                        "type": "string"
+                    },
+                    {
+                        "name": "pageId",
+                        "in": "query",
+                        "description": "Фильтр по ID страницы",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Поиск по title, value, code, group",
+                        "type": "string"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Номер страницы (по умолчанию 1)",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "per-page",
+                        "in": "query",
+                        "description": "Записей на странице (по умолчанию 50)",
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "schema": {
+                            "properties": {
+                                "items": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/ParameterEntity"
+                                    }
+                                },
+                                "_links": {
+                                    "type": "object"
+                                },
+                                "_meta": {
+                                    "type": "object"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/admin/parameter/{id}": {
+            "get": {
+                "tags": [
+                    "admin / parameter controller"
+                ],
+                "summary": "Получить параметр по ID",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID параметра",
+                        "required": true,
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "schema": {
+                            "$ref": "#/definitions/ParameterEntity"
+                        }
+                    },
+                    "404": {
+                        "description": "Параметр не найден"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "admin / parameter controller"
+                ],
+                "summary": "Обновить параметр",
+                "description": "Обновляет поля title, value, code, group, pageId.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID параметра",
+                        "required": true,
+                        "type": "integer"
+                    },
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "properties": {
+                                "title": {
+                                    "type": "string",
+                                    "maxLength": 255
+                                },
+                                "value": {
+                                    "type": "string"
+                                },
+                                "code": {
+                                    "type": "string",
+                                    "maxLength": 64
+                                },
+                                "group": {
+                                    "type": "string",
+                                    "maxLength": 64
+                                },
+                                "pageId": {
+                                    "type": "integer"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Параметр обновлён",
+                        "schema": {
+                            "$ref": "#/definitions/ParameterEntity"
+                        }
+                    },
+                    "404": {
+                        "description": "Параметр не найден"
+                    },
+                    "422": {
+                        "description": "Ошибка валидации"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "admin / parameter controller"
+                ],
+                "summary": "Удалить параметр",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID параметра",
+                        "required": true,
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Параметр успешно удалён"
+                    },
+                    "404": {
+                        "description": "Параметр не найден"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/admin/product": {
+            "post": {
+                "tags": [
+                    "admin / product controller"
+                ],
+                "summary": "Создать товар",
+                "description": "Создает новый товар и связанные с ним изображения.",
+                "operationId": "adminProductCreate",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "description": "Данные нового товара.",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CreateProductRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Товар успешно создан",
+                        "schema": {
+                            "$ref": "#/definitions/ProductResponseDto"
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации данных"
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован"
+                    },
+                    "403": {
+                        "description": "Недостаточно прав"
+                    },
+                    "500": {
+                        "description": "Ошибка при создании товара"
+                    }
+                }
+            }
+        },
+        "/admin/product/{id}": {
+            "put": {
+                "tags": [
+                    "admin / product controller"
+                ],
+                "summary": "Обновить товар",
+                "description": "Обновляет основные поля существующего товара. Категории и изображения изменяются отдельными методами.",
+                "operationId": "adminProductUpdate",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID товара",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "description": "Данные для обновления товара.",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UpdateProductRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Товар успешно обновлен",
+                        "schema": {
+                            "$ref": "#/definitions/ProductResponseDto"
+                        }
+                    },
+                    "404": {
+                        "description": "Товар не найден"
+                    },
+                    "422": {
+                        "description": "Ошибка валидации данных"
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован"
+                    },
+                    "403": {
+                        "description": "Недостаточно прав"
+                    },
+                    "500": {
+                        "description": "Ошибка при обновлении товара"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "admin / product controller"
+                ],
+                "summary": "Удалить товар",
+                "description": "Удаляет товар и связанные с ним файлы изображений.",
+                "operationId": "adminProductDelete",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID товара",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Товар успешно удален"
+                    },
+                    "404": {
+                        "description": "Товар не найден"
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован"
+                    },
+                    "403": {
+                        "description": "Недостаточно прав"
+                    },
+                    "500": {
+                        "description": "Ошибка при удалении товара"
+                    }
+                }
+            }
+        },
+        "/admin/product/{id}/sync-images": {
+            "post": {
+                "tags": [
+                    "admin / product controller"
+                ],
+                "summary": "Синхронизировать изображения товара",
+                "description": "Полностью синхронизирует галерею товара. Можно передавать существующие изображения через image_id или новые изображения через base64.",
+                "operationId": "adminProductSyncImages",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID товара",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "description": "Новый состав изображений товара.",
+                        "required": true,
+                        "schema": {
+                            "required": [
+                                "images"
+                            ],
+                            "properties": {
+                                "images": {
+                                    "description": "Массив изображений товара.",
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/FormFileImageDto"
+                                    }
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Изображения успешно синхронизированы",
+                        "schema": {
+                            "$ref": "#/definitions/ProductResponseDto"
+                        }
+                    },
+                    "404": {
+                        "description": "Товар не найден"
+                    },
+                    "422": {
+                        "description": "Некорректный формат данных"
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован"
+                    },
+                    "403": {
+                        "description": "Недостаточно прав"
+                    },
+                    "500": {
+                        "description": "Ошибка синхронизации изображений"
+                    }
+                }
+            }
+        },
+        "/admin/product/{id}/sync-categories": {
+            "post": {
+                "tags": [
+                    "admin / product controller"
+                ],
+                "summary": "Синхронизировать категории товара",
+                "description": "Удаляет существующие связи товара с категориями и создает новые связи на основании переданного массива categoryIds.",
+                "operationId": "adminProductSyncCategories",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID товара",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "description": "Идентификаторы категорий.",
+                        "required": true,
+                        "schema": {
+                            "required": [
+                                "categoryIds"
+                            ],
+                            "properties": {
+                                "categoryIds": {
+                                    "description": "Массив идентификаторов категорий.",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "integer",
+                                        "format": "int32"
+                                    }
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Категории товара успешно синхронизированы",
+                        "schema": {
+                            "$ref": "#/definitions/ProductResponseDto"
+                        }
+                    },
+                    "404": {
+                        "description": "Товар не найден"
+                    },
+                    "401": {
+                        "description": "Пользователь не авторизован"
+                    },
+                    "403": {
+                        "description": "Недостаточно прав"
+                    }
+                }
+            }
+        },
+        "/admin/requests": {
+            "get": {
+                "tags": [
+                    "admin / request controller"
+                ],
+                "summary": "Список заявок клиентов",
+                "description": "Возвращает список заявок с пагинацией и фильтрацией по статусу, телефону, email и общему поиску.",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Фильтр по статусу",
+                        "type": "string",
+                        "enum": [
+                            "new",
+                            "processing",
+                            "completed",
+                            "cancelled"
+                        ]
+                    },
+                    {
+                        "name": "phone",
+                        "in": "query",
+                        "description": "Фильтр по телефону (LIKE)",
+                        "type": "string"
+                    },
+                    {
+                        "name": "email",
+                        "in": "query",
+                        "description": "Фильтр по email (LIKE)",
+                        "type": "string"
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Общий поиск по телефону, email, пожеланиям и заметкам",
+                        "type": "string"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Номер страницы (по умолчанию 1)",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "per-page",
+                        "in": "query",
+                        "description": "Записей на странице (по умолчанию 20)",
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "schema": {
+                            "properties": {
+                                "items": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/CustomerRequestEntity"
+                                    }
+                                },
+                                "_links": {
+                                    "type": "object"
+                                },
+                                "_meta": {
+                                    "type": "object"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/admin/request/{id}": {
+            "get": {
+                "tags": [
+                    "admin / request controller"
+                ],
+                "summary": "Получить заявку по ID",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID заявки",
+                        "required": true,
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "schema": {
+                            "$ref": "#/definitions/CustomerRequestEntity"
+                        }
+                    },
+                    "404": {
+                        "description": "Заявка не найдена"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "admin / request controller"
+                ],
+                "summary": "Обновить заявку",
+                "description": "Обновляет поля заявки (phone, email, wishlist, admin_notes, status). Поле updated_at обновляется автоматически.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID заявки",
+                        "required": true,
+                        "type": "integer"
+                    },
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "properties": {
+                                "phone": {
+                                    "type": "string",
+                                    "maxLength": 32
+                                },
+                                "email": {
+                                    "type": "string",
+                                    "format": "email"
+                                },
+                                "wishlist": {
+                                    "type": "string"
+                                },
+                                "admin_notes": {
+                                    "type": "string"
+                                },
+                                "status": {
+                                    "type": "string",
+                                    "enum": [
+                                        "new",
+                                        "processing",
+                                        "completed",
+                                        "cancelled"
+                                    ]
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Заявка обновлена",
+                        "schema": {
+                            "$ref": "#/definitions/CustomerRequestEntity"
+                        }
+                    },
+                    "404": {
+                        "description": "Заявка не найдена"
+                    },
+                    "422": {
+                        "description": "Ошибка валидации"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "admin / request controller"
+                ],
+                "summary": "Удалить заявку",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID заявки",
+                        "required": true,
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Заявка успешно удалена"
+                    },
+                    "404": {
+                        "description": "Заявка не найдена"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/admin/request/{id}/set-processing": {
+            "post": {
+                "tags": [
+                    "admin / request controller"
+                ],
+                "summary": "Принять заявку в работу",
+                "description": "Переводит заявку в статус 'processing', обновляет updated_at и отправляет клиенту письмо о принятии заказа.",
+                "consumes": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID заявки",
+                        "required": true,
+                        "type": "integer"
+                    },
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": false,
+                        "schema": {
+                            "properties": {
+                                "admin_notes": {
+                                    "description": "Дополнительная заметка менеджера (добавится к заявке)",
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Статус изменён, письмо отправлено",
+                        "schema": {
+                            "$ref": "#/definitions/CustomerRequestEntity"
+                        }
+                    },
+                    "404": {
+                        "description": "Заявка не найдена"
+                    },
+                    "422": {
+                        "description": "Заявка уже в этом статусе"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/admin/request/{id}/set-completed": {
+            "post": {
+                "tags": [
+                    "admin / request controller"
+                ],
+                "summary": "Завершить заявку",
+                "description": "Переводит заявку в статус 'completed', обновляет updated_at и отправляет клиенту письмо о готовности заказа.",
+                "consumes": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID заявки",
+                        "required": true,
+                        "type": "integer"
+                    },
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": false,
+                        "schema": {
+                            "properties": {
+                                "admin_notes": {
+                                    "description": "Дополнительная заметка менеджера",
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Статус изменён, письмо отправлено",
+                        "schema": {
+                            "$ref": "#/definitions/CustomerRequestEntity"
+                        }
+                    },
+                    "404": {
+                        "description": "Заявка не найдена"
+                    },
+                    "422": {
+                        "description": "Заявка уже в этом статусе"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/admin/request/{id}/set-cancelled": {
+            "post": {
+                "tags": [
+                    "admin / request controller"
+                ],
+                "summary": "Отменить заявку",
+                "description": "Переводит заявку в статус 'cancelled', обновляет updated_at и отправляет клиенту письмо об отмене заказа.",
+                "consumes": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID заявки",
+                        "required": true,
+                        "type": "integer"
+                    },
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": false,
+                        "schema": {
+                            "properties": {
+                                "admin_notes": {
+                                    "description": "Причина отмены / заметка менеджера",
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Статус изменён, письмо отправлено",
+                        "schema": {
+                            "$ref": "#/definitions/CustomerRequestEntity"
+                        }
+                    },
+                    "404": {
+                        "description": "Заявка не найдена"
+                    },
+                    "422": {
+                        "description": "Заявка уже в этом статусе"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/admin/roles": {
+            "get": {
+                "tags": [
+                    "admin / role controller"
+                ],
+                "summary": "Список ролей с фильтрацией по названию",
+                "description": "Возвращает список ролей с пагинацией. Поддерживает фильтрацию по названию и expand=users,usersCount.",
+                "parameters": [
+                    {
+                        "name": "title",
+                        "in": "query",
+                        "description": "Фильтр по названию роли (LIKE %title%)",
+                        "type": "string"
+                    },
+                    {
+                        "name": "expand",
+                        "in": "query",
+                        "description": "Дополнительные поля: users, usersCount (через запятую)",
+                        "type": "string"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Номер страницы (по умолчанию 1)",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "per-page",
+                        "in": "query",
+                        "description": "Количество записей на странице (по умолчанию 50)",
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "schema": {
+                            "properties": {
+                                "items": {
+                                    "description": "Список ролей.\n\nGET /admin/roles",
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/RoleEntity"
+                                    }
+                                },
+                                "_links": {
+                                    "description": "Список ролей.\n\nGET /admin/roles",
+                                    "type": "object"
+                                },
+                                "_meta": {
+                                    "description": "Список ролей.\n\nGET /admin/roles",
+                                    "type": "object"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён (недостаточно прав)"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/admin/users": {
+            "get": {
+                "tags": [
+                    "admin / user controller"
+                ],
+                "summary": "Список пользователей",
+                "description": "Возвращает список пользователей с пагинацией и фильтрацией по роли, статусу и общему поиску.",
+                "parameters": [
+                    {
+                        "name": "role",
+                        "in": "query",
+                        "description": "Фильтр по названию роли (admin, manager, customer)",
+                        "type": "string"
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Фильтр по статусу: 0 — удалён, 9 — неактивен, 10 — активен",
+                        "type": "integer",
+                        "enum": [
+                            0,
+                            9,
+                            10
+                        ]
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Поиск по логину, email, ФИО, телефону",
+                        "type": "string"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Номер страницы (по умолчанию 1)",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "per-page",
+                        "in": "query",
+                        "description": "Количество записей на странице (по умолчанию 20)",
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "schema": {
+                            "properties": {
+                                "items": {
+                                    "description": "Настройка стандартных CRUD-действий.\nРазрешены: index, view, update, delete.\nСоздание пользователей выполняется через публичный endpoint /auth/signup.",
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/UserEntity"
+                                    }
+                                },
+                                "_links": {
+                                    "description": "Настройка стандартных CRUD-действий.\nРазрешены: index, view, update, delete.\nСоздание пользователей выполняется через публичный endpoint /auth/signup.",
+                                    "type": "object"
+                                },
+                                "_meta": {
+                                    "description": "Настройка стандартных CRUD-действий.\nРазрешены: index, view, update, delete.\nСоздание пользователей выполняется через публичный endpoint /auth/signup.",
+                                    "type": "object"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/admin/user/{id}": {
+            "get": {
+                "tags": [
+                    "admin / user controller"
+                ],
+                "summary": "Получить пользователя по ID",
+                "description": "Разрешены: index, view, update, delete.\nСоздание пользователей выполняется через публичный endpoint /auth/signup.",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID пользователя",
+                        "required": true,
+                        "type": "integer"
+                    },
+                    {
+                        "name": "expand",
+                        "in": "query",
+                        "description": "Дополнительные поля: roles, userRoles",
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "schema": {
+                            "$ref": "#/definitions/UserEntity"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "admin / user controller"
+                ],
+                "summary": "Обновить пользователя",
+                "description": "Обновляет данные пользователя. Пароль меняется только если переданы оба поля (password и passwordRepeat).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID пользователя",
+                        "required": true,
+                        "type": "integer"
+                    },
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UserRequestDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Пользователь обновлён",
+                        "schema": {
+                            "$ref": "#/definitions/UserEntity"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден"
+                    },
+                    "422": {
+                        "description": "Ошибка валидации данных"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "admin / user controller"
+                ],
+                "summary": "Удалить пользователя",
+                "description": "Удаляет пользователя и все его связи с ролями (каскадно). Нельзя удалить собственную учётную запись.",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID пользователя",
+                        "required": true,
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Пользователь успешно удалён"
+                    },
+                    "404": {
+                        "description": "Пользователь не найден"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён (в т.ч. попытка удалить себя)"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/admin/user": {
+            "post": {
+                "tags": [
+                    "admin / user controller"
+                ],
+                "summary": "Создать пользователя",
+                "description": "Создает нового пользователя. После создания автоматически назначается роль 'customer' по умолчанию.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UserRequestDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Пользователь успешно создан",
+                        "schema": {
+                            "$ref": "#/definitions/UserEntity"
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации данных"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/admin/user/{id}/password-set": {
+            "post": {
+                "tags": [
+                    "admin / user controller"
+                ],
+                "summary": "Установить новый пароль",
+                "description": "Устанавливает новый пароль для указанного пользователя. Старый пароль не требуется.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID пользователя",
+                        "required": true,
+                        "type": "integer"
+                    },
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/PasswordSetRequestDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Пароль успешно установлен",
+                        "schema": {
+                            "properties": {
+                                "success": {
+                                    "description": "Установка нового пароля пользователю.",
+                                    "type": "boolean",
+                                    "example": true
+                                },
+                                "message": {
+                                    "description": "Установка нового пароля пользователю.",
+                                    "type": "string",
+                                    "example": "Пароль успешно изменён"
+                                },
+                                "user": {
+                                    "description": "Установка нового пароля пользователю.",
+                                    "$ref": "#/definitions/UserEntity"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден"
+                    },
+                    "422": {
+                        "description": "Ошибка валидации пароля"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/admin/user/{id}/disabled": {
+            "post": {
+                "tags": [
+                    "admin / user controller"
+                ],
+                "summary": "Отключить учётную запись",
+                "description": "Устанавливает статус 'неактивен' (STATUS_INACTIVE = 9). Пользователь не сможет войти в систему, но данные сохраняются. Нельзя отключить свою учётную запись.",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID пользователя",
+                        "required": true,
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Учётная запись отключена",
+                        "schema": {
+                            "properties": {
+                                "success": {
+                                    "description": "Отключение учётной записи пользователя.\n\nУстанавливает статус 9 (STATUS_INACTIVE). Пользователь не сможет войти в систему,\nно его данные сохраняются в БД. Нельзя отключить собственную учётную запись.",
+                                    "type": "boolean",
+                                    "example": true
+                                },
+                                "message": {
+                                    "description": "Отключение учётной записи пользователя.\n\nУстанавливает статус 9 (STATUS_INACTIVE). Пользователь не сможет войти в систему,\nно его данные сохраняются в БД. Нельзя отключить собственную учётную запись.",
+                                    "type": "string",
+                                    "example": "Учётная запись отключена"
+                                },
+                                "user": {
+                                    "description": "Отключение учётной записи пользователя.\n\nУстанавливает статус 9 (STATUS_INACTIVE). Пользователь не сможет войти в систему,\nно его данные сохраняются в БД. Нельзя отключить собственную учётную запись.",
+                                    "$ref": "#/definitions/UserEntity"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён (в т.ч. попытка отключить себя)"
+                    },
+                    "422": {
+                        "description": "Учётная запись уже отключена"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/admin/user/{id}/assign-role": {
+            "post": {
+                "tags": [
+                    "admin / user controller"
+                ],
+                "summary": "Назначить роль пользователю",
+                "description": "Назначает пользователю роль по ID или по названию. Если роль уже назначена — операция идемпотентна.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID пользователя",
+                        "required": true,
+                        "type": "integer"
+                    },
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "properties": {
+                                "roleId": {
+                                    "description": "ID роли (альтернатива полю role)",
+                                    "type": "integer"
+                                },
+                                "role": {
+                                    "description": "Название роли (admin, manager, customer) — альтернатива roleId",
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Роль успешно назначена",
+                        "schema": {
+                            "properties": {
+                                "success": {
+                                    "description": "Назначение роли пользователю.",
+                                    "type": "boolean"
+                                },
+                                "message": {
+                                    "description": "Назначение роли пользователю.",
+                                    "type": "string"
+                                },
+                                "user": {
+                                    "description": "Назначение роли пользователю.",
+                                    "$ref": "#/definitions/UserEntity"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Не указан roleId или role"
+                    },
+                    "404": {
+                        "description": "Пользователь или роль не найдены"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/admin/users/{id}/roles/{roleId}": {
+            "delete": {
+                "tags": [
+                    "admin / user controller"
+                ],
+                "summary": "Отозвать роль у пользователя",
+                "description": "Удаляет связь между пользователем и ролью.",
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID пользователя",
+                        "required": true,
+                        "type": "integer"
+                    },
+                    {
+                        "name": "roleId",
+                        "in": "path",
+                        "description": "ID роли",
+                        "required": true,
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Роль успешно отозвана",
+                        "schema": {
+                            "properties": {
+                                "success": {
+                                    "description": "Отзыв роли у пользователя.",
+                                    "type": "boolean"
+                                },
+                                "message": {
+                                    "description": "Отзыв роли у пользователя.",
+                                    "type": "string"
+                                },
+                                "user": {
+                                    "description": "Отзыв роли у пользователя.",
+                                    "$ref": "#/definitions/UserEntity"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь или роль не найдены"
+                    },
+                    "422": {
+                        "description": "У пользователя нет такой роли"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    },
+                    "403": {
+                        "description": "Доступ запрещён"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        }
+    },
+    "definitions": {
+        "CategoryRequestDto": {
+            "properties": {
+                "title": {
+                    "description": "Название категории",
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "description": {
+                    "description": "Описание категории",
+                    "type": "string"
+                },
+                "base64": {
+                    "description": "Изображение в формате Base64",
+                    "type": "string"
+                },
+                "updateImage": {
+                    "description": "Обновить или удалить текущее изображение (при NULLL в base64 будет просто удалено текущение избражение)",
+                    "type": "boolean"
+                }
+            }
+        },
+        "CreateProductRequest": {
+            "required": [
+                "title",
+                "shortDescription",
+                "longDescription"
+            ],
+            "properties": {
+                "title": {
+                    "description": "Название товара",
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "article": {
+                    "description": "Артикул товара",
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "shortDescription": {
+                    "description": "Краткое описание товара",
+                    "type": "string"
+                },
+                "longDescription": {
+                    "description": "Подробное описание товара",
+                    "type": "string"
+                },
+                "info": {
+                    "description": "Дополнительная информация",
+                    "type": "string"
+                },
+                "price": {
+                    "description": "Цена товара",
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0
+                },
+                "inStock": {
+                    "description": "Наличие товара на складе",
+                    "type": "boolean"
+                },
+                "manufacturer": {
+                    "description": "Производитель",
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "country": {
+                    "description": "Страна производства",
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "categoryIds": {
+                    "description": "Идентификаторы категорий",
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "images": {
+                    "description": "Массив изображений товара (одно из них должно быть с isMain=true)",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/FormFileImageDto"
+                    }
+                }
+            }
+        },
+        "FormFileImageDto": {
+            "description": "Модель для загружаемого изображения",
+            "required": [
+                "title",
+                "base64"
+            ],
+            "properties": {
+                "base64": {
+                    "description": "Содержимое картинки base64",
+                    "type": "string"
+                },
+                "isMain": {
+                    "description": "Является главной",
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "LoginForm": {
+            "required": [
+                "username",
+                "password"
+            ],
+            "properties": {
+                "username": {
+                    "description": "Логин или E-mail",
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "password": {
+                    "description": "Пароль",
+                    "type": "string",
+                    "format": "password",
+                    "example": "password123"
+                }
+            }
+        },
+        "PasswordSetRequestDto": {
+            "description": "DTO для установки нового пароля",
+            "required": [
+                "password",
+                "passwordRepeat"
+            ],
+            "properties": {
+                "password": {
+                    "description": "Новый пароль (минимум 6 символов)",
+                    "type": "string",
+                    "minLength": 6,
+                    "example": "newSecurePassword123"
+                },
+                "passwordRepeat": {
+                    "description": "Повтор нового пароля",
+                    "type": "string",
+                    "example": "newSecurePassword123"
+                }
+            },
+            "type": "object"
+        },
+        "SignupForm": {
+            "required": [
+                "userтame",
+                "password",
+                "passwordRepeat",
+                "email",
+                "phone",
+                "name",
+                "surname"
+            ],
+            "properties": {
+                "userтame": {
+                    "description": "Логин пользователя",
+                    "type": "string",
+                    "maxLength": 64,
+                    "example": "newuser"
+                },
+                "password": {
+                    "description": "Пароль (минимум 6 символов)",
+                    "type": "string",
+                    "format": "password",
+                    "minLength": 6,
+                    "example": "password123"
+                },
+                "passwordRepeat": {
+                    "description": "Повтор пароля",
+                    "type": "string",
+                    "format": "password",
+                    "example": "password123"
+                },
+                "email": {
+                    "description": "Адрес электронной почты",
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                },
+                "phone": {
+                    "description": "Номер телефона",
+                    "type": "string",
+                    "maxLength": 32,
+                    "example": "+79991234567"
+                },
+                "address": {
+                    "description": "Адрес пользователя",
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "г. Москва, ул. Ленина 1"
+                },
+                "name": {
+                    "description": "Имя",
+                    "type": "string",
+                    "maxLength": 64,
+                    "example": "Иван"
+                },
+                "surname": {
+                    "description": "Фамилия",
+                    "type": "string",
+                    "maxLength": 64,
+                    "example": "Иванов"
+                },
+                "patronymic": {
+                    "description": "Отчество",
+                    "type": "string",
+                    "maxLength": 64,
+                    "example": "Иванович"
+                },
+                "dateOfBirth": {
+                    "description": "Дата рождения (YYYY-MM-DD)",
+                    "type": "string",
+                    "format": "date",
+                    "example": "1990-01-01"
+                }
+            }
+        },
+        "UpdateProductRequest": {
+            "required": [
+                "title",
+                "shortDescription",
+                "longDescription"
+            ],
+            "properties": {
+                "title": {
+                    "description": "Название товара",
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "article": {
+                    "description": "Артикул товара",
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "shortDescription": {
+                    "description": "Краткое описание товара",
+                    "type": "string"
+                },
+                "longDescription": {
+                    "description": "Подробное описание товара",
+                    "type": "string"
+                },
+                "info": {
+                    "description": "Дополнительная информация",
+                    "type": "string"
+                },
+                "price": {
+                    "description": "Цена товара",
+                    "type": "number",
+                    "format": "float",
+                    "minimum": 0
+                },
+                "inStock": {
+                    "description": "Наличие товара на складе",
+                    "type": "boolean"
+                },
+                "manufacturer": {
+                    "description": "Производитель",
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "country": {
+                    "description": "Страна производства",
+                    "type": "string",
+                    "maxLength": 255
+                }
+            }
+        },
+        "UserRequestDto": {
+            "description": "DTO для создания и обновления пользователя",
+            "required": [
+                "userтame",
+                "password",
+                "passwordRepeat",
+                "name",
+                "surname"
+            ],
+            "properties": {
+                "userтame": {
+                    "description": "Логин пользователя",
+                    "type": "string",
+                    "example": "ivanov_ii"
+                },
+                "password": {
+                    "description": "Пароль (обязателен при создании, опционален при обновлении)",
+                    "type": "string",
+                    "example": "secret123"
+                },
+                "passwordRepeat": {
+                    "description": "Повтор пароля",
+                    "type": "string",
+                    "example": "secret123"
+                },
+                "email": {
+                    "description": "Адрес электронной почты",
+                    "type": "string",
+                    "format": "email",
+                    "example": "ivanov@example.com"
+                },
+                "phone": {
+                    "description": "Номер телефона",
+                    "type": "string",
+                    "example": "+7 (999) 123-45-67"
+                },
+                "address": {
+                    "description": "Адрес проживания",
+                    "type": "string",
+                    "example": "г. Москва, ул. Ленина, д. 10"
+                },
+                "name": {
+                    "description": "Имя",
+                    "type": "string",
+                    "example": "Иван"
+                },
+                "surname": {
+                    "description": "Фамилия",
+                    "type": "string",
+                    "example": "Иванов"
+                },
+                "patronymic": {
+                    "description": "Отчество",
+                    "type": "string",
+                    "example": "Иванович"
+                },
+                "dateOfBirth": {
+                    "description": "Дата рождения (YYYY-MM-DD)",
+                    "type": "string",
+                    "format": "date",
+                    "example": "1990-05-15"
+                },
+                "status": {
+                    "description": "Статус аккаунта (только при обновлении)",
+                    "type": "integer",
+                    "enum": [
+                        0,
+                        9,
+                        10
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "CategoryResponseDto": {
+            "required": [
+                "id",
+                "title"
+            ],
+            "properties": {
+                "id": {
+                    "description": "Идентификатор категории",
+                    "type": "integer"
+                },
+                "title": {
+                    "description": "Название категории",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Описание категории",
+                    "type": "string"
+                },
+                "imageUrl": {
+                    "description": "Сылка на изображение категории, url",
+                    "type": "string"
+                },
+                "imageId": {
+                    "description": "Идентификатор изображегния, url",
+                    "type": "integer"
+                }
+            }
+        },
+        "Ok201ResponseDto": {
+            "required": [
+                "message"
+            ],
+            "properties": {
+                "message": {
+                    "description": "Текст сообщения",
+                    "type": "string"
+                },
+                "data": {
+                    "description": "Содержимое ответа",
+                    "type": "object"
+                }
+            }
+        },
+        "ParameterResponseDto": {
+            "required": [
+                "code",
+                "title",
+                "value"
+            ],
+            "properties": {
+                "code": {
+                    "description": "Системный код",
+                    "type": "string"
+                },
+                "title": {
+                    "description": "Наименование",
+                    "type": "string"
+                },
+                "value": {
+                    "description": "Значение",
+                    "type": "string"
+                }
+            }
+        },
+        "ProductImageResponseDto": {
+            "required": [
+                "product_id",
+                "image_id",
+                "is_main",
+                "title",
+                "url"
+            ],
+            "properties": {
+                "product_id": {
+                    "description": "Идентификатор товара",
+                    "type": "integer"
+                },
+                "image_id": {
+                    "description": "Идентификатор изображения",
+                    "type": "integer"
+                },
+                "is_main": {
+                    "description": "Является ли изображение главным",
+                    "type": "boolean"
+                },
+                "title": {
+                    "description": "Название изображения",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "URL изображения",
+                    "type": "string",
+                    "format": "uri"
+                }
+            }
+        },
+        "ProductResponseDto": {
+            "required": [
+                "id",
+                "title",
+                "short_description",
+                "long_description",
+                "price",
+                "in_stock",
+                "created_at",
+                "mainImage",
+                "images"
+            ],
+            "properties": {
+                "id": {
+                    "description": "Идентификатор товара",
+                    "type": "integer"
+                },
+                "title": {
+                    "description": "Название товара",
+                    "type": "string"
+                },
+                "short_description": {
+                    "description": "Краткое описание товара",
+                    "type": "string"
+                },
+                "long_description": {
+                    "description": "Подробное описание товара",
+                    "type": "string"
+                },
+                "info": {
+                    "description": "Дополнительная информация",
+                    "type": "string"
+                },
+                "article": {
+                    "description": "Артикул / заводской код",
+                    "type": "string"
+                },
+                "price": {
+                    "description": "Цена товара",
+                    "type": "number",
+                    "format": "float"
+                },
+                "in_stock": {
+                    "description": "Наличие на складе: 1 - в наличии, 0 - под заказ",
+                    "type": "integer",
+                    "enum": [
+                        0,
+                        1
+                    ]
+                },
+                "manufacturer": {
+                    "description": "Производитель",
+                    "type": "string"
+                },
+                "country": {
+                    "description": "Страна производства",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Дата создания",
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "mainImageUrl": {
+                    "description": "Главное/основное изображение продукции, url",
+                    "type": "string"
+                },
+                "otherImageUrls": {
+                    "description": "Коллекция изображений товара, коллекция url",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "images": {
+                    "description": "Все связанные изображения",
+                    "$ref": "#/definitions/ProductImageResponseDto"
+                },
+                "categories": {
+                    "description": "Коллекция категорий товара",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/CategoryResponseDto"
+                    }
+                }
+            }
+        },
+        "ProductShortResponseDto": {
+            "required": [
+                "id",
+                "title",
+                "price",
+                "in_stock",
+                "mainImage"
+            ],
+            "properties": {
+                "id": {
+                    "description": "Идентификатор товара",
+                    "type": "integer"
+                },
+                "title": {
+                    "description": "Название товара",
+                    "type": "string"
+                },
+                "price": {
+                    "description": "Цена товара",
+                    "type": "number",
+                    "format": "float"
+                },
+                "in_stock": {
+                    "description": "Наличие на складе: 1 - в наличии, 0 - под заказ",
+                    "type": "integer",
+                    "enum": [
+                        0,
+                        1
+                    ]
+                },
+                "mainImageUrl": {
+                    "description": "Главное/основное изображение продукции, url",
+                    "type": "string"
+                }
+            }
+        },
+        "SigninResponsDto": {
+            "required": [
+                "token",
+                "tokenType",
+                "expiresIn",
+                "user"
+            ],
+            "properties": {
+                "token": {
+                    "description": "JWT токен доступа",
+                    "type": "string"
+                },
+                "tokenType": {
+                    "description": "Тип токена",
+                    "type": "string",
+                    "example": "Bearer"
+                },
+                "expiresIn": {
+                    "description": "Время жизни токена в секундах",
+                    "type": "integer",
+                    "example": 604800
+                },
+                "user": {
+                    "description": "Данные авторизованного пользователя",
+                    "$ref": "#/definitions/UserEntity"
+                }
+            }
+        },
+        "UserResponseDto": {
+            "required": [
+                "id",
+                "username",
+                "email",
+                "phone",
+                "name",
+                "surname",
+                "date_of_registration",
+                "active",
+                "userRoles",
+                "roles"
+            ],
+            "properties": {
+                "id": {
+                    "description": "Идентификатор пользователя",
+                    "type": "integer"
+                },
+                "username": {
+                    "description": "Логин пользователя",
+                    "type": "string"
+                },
+                "email": {
+                    "description": "Адрес электронной почты",
+                    "type": "string",
+                    "format": "email"
+                },
+                "phone": {
+                    "description": "Телефон пользователя",
+                    "type": "string"
+                },
+                "address": {
+                    "description": "Адрес пользователя",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Имя",
+                    "type": "string"
+                },
+                "surname": {
+                    "description": "Фамилия",
+                    "type": "string"
+                },
+                "patronymic": {
+                    "description": "Отчество",
+                    "type": "string"
+                },
+                "date_of_birth": {
+                    "description": "Дата рождения",
+                    "type": "string",
+                    "format": "date"
+                },
+                "image": {
+                    "description": "Ссылка на изображение пользователя",
+                    "type": "string",
+                    "format": "uri"
+                },
+                "date_of_registration": {
+                    "description": "Дата регистрации",
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "active": {
+                    "description": "Активен ли пользователь",
+                    "type": "boolean"
+                },
+                "userRoles": {
+                    "description": "Связи пользователя с ролями",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/UserRoleEntity"
+                    }
+                },
+                "roles": {
+                    "description": "Роли пользователя",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/RoleEntity"
+                    }
+                }
+            }
+        },
+        "CustomerRequestEntity": {
+            "required": [
+                "id",
+                "product_id",
+                "created_at",
+                "updated_at",
+                "status"
+            ],
+            "properties": {
+                "id": {
+                    "description": "Идентификатор записи",
+                    "type": "integer"
+                },
+                "product_id": {
+                    "description": "Идентификатор продукции",
+                    "type": "integer"
+                },
+                "phone": {
+                    "description": "Телефон",
+                    "type": "string"
+                },
+                "email": {
+                    "description": "Адрес электронной почты",
+                    "type": "string"
+                },
+                "wishlist": {
+                    "description": "Пожелания / Текст заявки",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Дата создания",
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "updated_at": {
+                    "description": "Дата последнего обновления",
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "status": {
+                    "description": "Статус",
+                    "type": "string"
+                },
+                "admin_notes": {
+                    "description": "Служебные заметки",
+                    "type": "string"
+                }
+            }
+        },
+        "ImageEntity": {
+            "properties": {
+                "id": {
+                    "description": "Идентификатор",
+                    "type": "integer"
+                },
+                "title": {
+                    "description": "Название картинки",
+                    "type": "string"
+                },
+                "path": {
+                    "description": "Относительный путь в файловой системе",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "URL для открытия",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "ParameterEntity": {
+            "required": [
+                "id",
+                "title",
+                "value"
+            ],
+            "properties": {
+                "id": {
+                    "description": "Идентификатор записи",
+                    "type": "integer"
+                },
+                "title": {
+                    "description": "Название параметра",
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "value": {
+                    "description": "Значение",
+                    "type": "string"
+                },
+                "code": {
+                    "description": "Системный код",
+                    "type": "string",
+                    "maxLength": 64
+                },
+                "group": {
+                    "description": "Группа параметров",
+                    "type": "string",
+                    "maxLength": 64
+                },
+                "pageId": {
+                    "description": "Идентификатор страницы",
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
+        "RoleEntity": {
+            "required": [
+                "id",
+                "title"
+            ],
+            "properties": {
+                "id": {
+                    "description": "Идентификатор роли",
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "title": {
+                    "description": "Название роли",
+                    "type": "string",
+                    "maxLength": 64
+                },
+                "users": {
+                    "description": "Пользователи, которым назначена роль. Возвращается при expand=users.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/UserEntity"
+                    }
+                },
+                "usersCount": {
+                    "description": "Количество пользователей с данной ролью. Возвращается при expand=usersCount.",
+                    "type": "integer",
+                    "format": "int32"
+                }
+            }
+        },
+        "UserEntity": {
+            "description": "Модель пользователя (полное представление)",
+            "required": [
+                "id",
+                "username",
+                "email",
+                "phone",
+                "name",
+                "surname",
+                "status",
+                "datOfRegistration"
+            ],
+            "properties": {
+                "id": {
+                    "description": "Идентификатор пользователя",
+                    "type": "integer",
+                    "example": 42
+                },
+                "username": {
+                    "description": "Логин пользователя",
+                    "type": "string",
+                    "example": "ivanov_ii"
+                },
+                "email": {
+                    "description": "Адрес электронной почты",
+                    "type": "string",
+                    "format": "email",
+                    "example": "ivanov@example.com"
+                },
+                "phone": {
+                    "description": "Номер телефона",
+                    "type": "string",
+                    "example": "+7 (999) 123-45-67"
+                },
+                "address": {
+                    "description": "Адрес проживания",
+                    "type": "string",
+                    "example": "г. Москва, ул. Ленина, д. 10"
+                },
+                "name": {
+                    "description": "Имя",
+                    "type": "string",
+                    "example": "Иван"
+                },
+                "surname": {
+                    "description": "Фамилия",
+                    "type": "string",
+                    "example": "Иванов"
+                },
+                "patronymic": {
+                    "description": "Отчество",
+                    "type": "string",
+                    "example": "Иванович"
+                },
+                "dateOfBirth": {
+                    "description": "Дата рождения (YYYY-MM-DD)",
+                    "type": "string",
+                    "format": "date",
+                    "example": "1990-05-15"
+                },
+                "datOfRegistration": {
+                    "description": "Дата и время регистрации",
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2024-01-15T09:30:00+03:00"
+                },
+                "fullName": {
+                    "description": "Полное ФИО",
+                    "type": "string",
+                    "example": "Иванов Иван Иванович"
+                },
+                "status": {
+                    "description": "Статус аккаунта: 0 — удалён, 9 — неактивен, 10 — активен",
+                    "type": "integer",
+                    "enum": [
+                        0,
+                        9,
+                        10
+                    ],
+                    "example": 10
+                },
+                "roles": {
+                    "description": "Назначенные роли",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/UserRoleEntity"
+                    }
+                }
+            },
+            "type": "object"
+        },
+        "UserRoleEntity": {
+            "description": "Модель связи между пользователями и ролями",
+            "required": [
+                "user_id",
+                "role_id"
+            ],
+            "properties": {
+                "user_id": {
+                    "description": "Идентификатор пользователя",
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "role_id": {
+                    "description": "Идентификатор роли",
+                    "type": "integer",
+                    "format": "int64"
+                }
+            },
+            "type": "object"
+        }
+    },
+    "tags": [
+        {
+            "name": "public / auth controller",
+            "description": "Аутентификация, регистрация и управление профилем пользователя."
+        },
+        {
+            "name": "public / category controller",
+            "description": "Публичная витрина категорий товаров."
+        },
+        {
+            "name": "public / parameter controller",
+            "description": "Публичный доступ к параметрам сайта."
+        },
+        {
+            "name": "public / product controller",
+            "description": "Публичная витрина товаров."
+        },
+        {
+            "name": "admin / category controller",
+            "description": "Управление категориями товаров."
+        },
+        {
+            "name": "admin / image controller",
+            "description": "Управление изображениями."
+        },
+        {
+            "name": "admin / parameter controller",
+            "description": "CRUD параметров сайта (ParameterEntity)."
+        },
+        {
+            "name": "admin / product controller",
+            "description": "Управление продукцией."
+        },
+        {
+            "name": "admin / request controller",
+            "description": "Управление заявками клиентов."
+        },
+        {
+            "name": "admin / role controller",
+            "description": "Управление ролями пользователей."
+        },
+        {
+            "name": "admin / user controller",
+            "description": "Управление пользователями и их ролями."
+        }
+    ],
+    "securityDefinitions": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": "Вставь: Bearer <jwt>  (слово Bearer, пробел, токен)"
+        }
+    },
+    "security": [
+        {
+            "Bearer": []
+        }
+    ]
+}

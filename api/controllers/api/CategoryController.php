@@ -2,10 +2,12 @@
 
 namespace app\controllers\api;
 
-use yii\data\ActiveDataProvider;
 use app\models\entities\CategoryEntity;
+use app\models\entities\ProductEntity;
 use app\models\dtos\response\CategoryResponseDto;
+use app\models\dtos\response\ProductShortResponseDto;
 use Yii;
+use yii\web\NotFoundHttpException;
 
 /**
  * Публичный REST API контроллер категорий (витрина магазина).
@@ -68,6 +70,62 @@ class CategoryController extends BaseApiController
         return $items;
     }
 
+
+    /**
+     * Список товаров в указанной категории.
+     *
+     * @SWG\Get(
+     *     path="/categories/{id}/products",
+     *     tags={"public / category controller"},
+     *     operationId="publicCategoryProducts",
+     *     summary="Товары категории",
+     *     description="Возвращает список товаров для указанной категории в виде ProductShortResponseDto.",
+     *     produces={"application/json"},
+     *
+     *     @SWG\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         type="integer",
+     *         description="ID категории"
+     *     ),
+     *     @SWG\Response(
+     *         response=200,
+     *         description="Успешный ответ",
+     *         @SWG\Schema(
+     *             type="array",
+     *             @SWG\Items(ref="#/definitions/ProductShortResponseDto")
+     *         )
+     *     ),
+     *     @SWG\Response(
+     *         response=404,
+     *         description="Категория не найдена"
+     *     )
+     * )
+     */
+    public function actionProducts(int $id): array
+    {
+        $category = CategoryEntity::findOne($id);
+        if (!$category) {
+            throw new NotFoundHttpException("Категория с ID {$id} не найдена.");
+        }
+
+        // Получаем товары категории с подгрузкой главного изображения
+        $products = $category->getProducts()
+            ->with(['mainImage'])
+            ->all();
+
+        // Преобразуем каждый товар в DTO
+
+
+
+        return array_map(
+            fn(ProductEntity $product) => $this->buildProductShortResponseDto($product, [$category])->toArray(),
+            $products
+        );
+    }
+
+
     /**
      * Формирует CategoryResponseDto для категории с учётом связанного изображения.
      *
@@ -77,5 +135,31 @@ class CategoryController extends BaseApiController
     private function buildCategoryResponseDto(CategoryEntity $category): CategoryResponseDto
     {
         return CategoryResponseDto::create($category, $category->imageEntity);
+    }
+
+
+    /**
+     * Формирует ProductShortResponseDto для товара.
+     *
+     * @param ProductEntity $product
+     * @param array $categories
+     * @return ProductShortResponseDto
+     */
+    private function buildProductShortResponseDto(ProductEntity $product, $categories): ProductShortResponseDto
+    {
+        $mainImageUrl = '';
+        $mainImage = $product->getMainImage()->one();
+        if ($mainImage) {
+            $mainImageUrl = $mainImage->url;
+        }
+        $categoryTitles = array_map(fn($c)=> $c->title, $categories);
+        return new ProductShortResponseDto(
+            $product->id,
+            $product->title,
+            $product->price,
+            (int) $product->in_stock,
+            $mainImageUrl,
+            $categoryTitles
+        );
     }
 }
