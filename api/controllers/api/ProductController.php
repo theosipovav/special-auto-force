@@ -161,19 +161,18 @@ class ProductController extends BaseApiController
      */
     public function actionLatest()
     {
+        $limit = Yii::$app->request->get('limit');
+        if (empty($limit)){
+            $limit = 10;
+        }
         $products = ProductEntity::find()
             ->with(['productImages.imageEntity'])
             ->orderBy(['created_at' => SORT_DESC])
-            ->limit(10)
+            ->limit($limit)
             ->all();
 
         $items = array_map(fn($p) => $this->buildProductShortResponseDto($p)->toArray(), $products);
-
-        return [
-            'success' => true,
-            'count' => count($items),
-            'items' => $items,
-        ];
+        return $items;
     }
 
     /**
@@ -197,6 +196,12 @@ class ProductController extends BaseApiController
      */
     public function actionPopular()
     {
+
+        $limit = Yii::$app->request->get('limit');
+        if (empty($limit)){
+            $limit = 10;
+        }
+
         $oneYearAgo = date('Y-m-d H:i:s', strtotime('-1 year'));
 
         // Получаем ID товаров, отсортированные по количеству заявок за последний год
@@ -207,40 +212,36 @@ class ProductController extends BaseApiController
             ->andWhere(['!=', 'status', CustomerRequestEntity::STATUS_CANCELLED])
             ->groupBy('product_id')
             ->orderBy(['COUNT(*)' => SORT_DESC])
-            ->limit(10)
+            ->limit($limit)
             ->column();
 
+
         if (empty($productIds)) {
-            return [
-                'success' => true,
-                'count' => 0,
-                'items' => [],
-            ];
-        }
-
-        // Загружаем товары
-        $products = ProductEntity::find()->where(['id' => $productIds])->with(['productImages.imageEntity'])->all();
-
-        // Сохраняем порядок популярности (сортируем по убыванию заявок)
-        $productsMap = [];
-        foreach ($products as $p) {
-            $productsMap[$p->id] = $p;
-        }
-        
-        $sortedProducts = [];
-        foreach ($productIds as $id) {
-            if (isset($productsMap[$id])) {
-                $sortedProducts[] = $productsMap[$id];
+            $productIds = ProductEntity::find()
+                ->select(['id'])
+                ->orderBy(new \yii\db\Expression('RAND()'))
+                ->limit($limit)
+                ->column();
+            if (empty($productIds)) {
+                throw new NotFoundHttpException("Каталог продукции пуст");
             }
+            $products = ProductEntity::find()->where(['id' => $productIds])->with(['productImages.imageEntity'])->all();
+            $items = array_map(fn($p) => $this->buildProductShortResponseDto($p)->toArray(), $products);
+        } else {
+            $products = ProductEntity::find()->where(['id' => $productIds])->with(['productImages.imageEntity'])->all();
+            $productsMap = [];
+            foreach ($products as $p) {
+                $productsMap[$p->id] = $p;
+            }
+            $sortedProducts = [];
+            foreach ($productIds as $id) {
+                if (isset($productsMap[$id])) {
+                    $sortedProducts[] = $productsMap[$id];
+                }
+            }
+            $items = array_map(fn($p) => $this->buildProductShortResponseDto($p)->toArray(), $sortedProducts);
         }
-
-        $items = array_map(fn($p) => $this->buildProductShortResponseDto($p)->toArray(), $sortedProducts);
-
-        return [
-            'success' => true,
-            'count' => count($items),
-            'items' => $items,
-        ];
+        return $items;
     }
 
     /**
@@ -345,17 +346,17 @@ class ProductController extends BaseApiController
         );
 
         $categoryDtos = array_map(
-        fn($category) => CategoryResponseDto::create(
-            $category, 
-            $category->imageEntity, 
-            count($category->productCategories)
-        ),
-        $product->categories
-    );
+            fn($category) => CategoryResponseDto::create(
+                $category,
+                $category->imageEntity,
+                count($category->productCategories)
+            ),
+            $product->categories
+        );
 
         return ProductResponseDto::createFromProduct($product, $productImageDtos, $categoryDtos);
     }
-    
+
 
     /**
      * Формирует ProductShortResponseDto (краткая карточка для списков).

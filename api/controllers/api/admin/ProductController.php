@@ -140,7 +140,7 @@ class ProductController extends BaseApiAdminController
             $product->long_description = $request->longDescription;
             $product->info = $request->info;
             $product->price = $request->price;
-            $product->in_stock = (int) $request->inStock;
+            $product->in_stock = $request->inStock ? 1: 0;
             $product->manufacturer = $request->manufacturer;
             $product->country = $request->country;
             if (!$product->save()) {
@@ -234,7 +234,20 @@ class ProductController extends BaseApiAdminController
         }
         $request = new UpdateProductRequest();
         $request->load(Yii::$app->request->getBodyParams(), '');
+
+
         $product->load($request, '');
+        $product->title = $request->title;
+        $product->article = $request->article;
+        $product->short_description = $request->shortDescription;
+        $product->long_description = $request->longDescription;
+        $product->info = $request->info;
+        $product->price = $request->price;
+        $product->in_stock = $request->inStock ? 1 : 0;
+        $product->manufacturer = $request->manufacturer;
+        $product->country = $request->country;
+
+
         if (!$product->save()) {
             $errorString = json_encode($product->getErrors(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             Yii::error('Не удалось обновить продукцию: ' . $errorString, __METHOD__);

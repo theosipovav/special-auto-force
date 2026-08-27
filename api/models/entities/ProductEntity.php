@@ -8,11 +8,11 @@ use yii\db\ActiveRecord;
 /**
  * Модель сущности "Товар" (ProductEntity)
  *
- * @property int $id Id
- * @property string $title Название (Title)
- * @property string|null $short_description Краткое описание (ShortDescription)
- * @property string|null $long_description Подробное описание (LongDescription)
- * @property string|null $info Дополнительная информация (Info)
+ * @property int $id Идентификатор
+ * @property string $title Название
+ * @property string|null $short_description Краткое описание
+ * @property string|null $long_description Подробное описание
+ * @property string|null $info Дополнительная информация
  * @property string|null $article Артикул / Заводской код
  * @property float|null $price Цена
  * @property int $in_stock Наличие на складе (1 - в наличии, 0 - под заказ)
@@ -50,7 +50,7 @@ class ProductEntity extends ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id' => 'ID',
+            'id' => 'Идентификатор',
             'title' => 'Название товара',
             'short_description' => 'Краткое описание',
             'long_description' => 'Подробное описание',
