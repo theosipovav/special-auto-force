@@ -29,7 +29,7 @@ $config = yii\helpers\ArrayHelper::merge($main, [
             },
         ],
         'user' => [
-            'identityClass' => 'app\models\entities\UserEntity',
+            'identityClass' => 'app\entities\UserEntity',
             'enableAutoLogin' => false,
             'enableSession' => false,
             'loginUrl' => null,

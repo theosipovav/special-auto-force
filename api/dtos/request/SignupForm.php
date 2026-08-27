@@ -1,11 +1,11 @@
 <?php
 
-namespace app\models\dtos\request;
+namespace app\dtos\request;
 
 use Yii;
 use yii\base\Model;
-use app\models\entities\UserEntity;
-use app\models\entities\RoleEntity;
+use app\entities\UserEntity;
+use app\entities\RoleEntity;
 
 /**
  * Форма регистрации пользователя.

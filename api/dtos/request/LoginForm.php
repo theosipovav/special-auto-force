@@ -1,10 +1,10 @@
 <?php
 
-namespace app\models\dtos\request;
+namespace app\dtos\request;
 
 use Yii;
 use yii\base\Model;
-use app\models\entities\UserEntity;
+use app\entities\UserEntity;
 
 /**
  * Форма авторизации.

@@ -1,6 +1,6 @@
 <?php
 
-namespace app\models\dtos\request;
+namespace app\dtos\request;
 
 use Yii;
 use yii\base\Model;

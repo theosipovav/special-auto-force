@@ -2,10 +2,10 @@
 
 namespace app\controllers\api;
 
-use app\models\entities\CategoryEntity;
-use app\models\entities\ProductEntity;
-use app\models\dtos\response\CategoryResponseDto;
-use app\models\dtos\response\ProductShortResponseDto;
+use app\entities\CategoryEntity;
+use app\entities\ProductEntity;
+use app\dtos\response\CategoryResponseDto;
+use app\dtos\response\ProductShortResponseDto;
 use Yii;
 use yii\web\NotFoundHttpException;
 

@@ -5,7 +5,7 @@ namespace app\controllers\api\admin;
 use Yii;
 use app\controllers\api\BaseApiController;
 use yii\web\ForbiddenHttpException;
-use app\models\entities\UserEntity;
+use app\entities\UserEntity;
 
 /**
  * Базовый админский абстрактный REST API контроллер 

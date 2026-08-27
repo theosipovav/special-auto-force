@@ -4,8 +4,8 @@ namespace app\controllers\api;
 
 use Yii;
 use yii\web\NotFoundHttpException;
-use app\models\entities\ParameterEntity;
-use app\models\entities\ParameterResponseDto;
+use app\entities\ParameterEntity;
+use app\entities\ParameterResponseDto;
 
 /**
  * Публичный REST API контроллер параметров сайта.

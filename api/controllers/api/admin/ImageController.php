@@ -4,7 +4,7 @@ namespace app\controllers\api\admin;
 
 use Yii;
 use yii\data\ActiveDataProvider;
-use app\models\entities\ImageEntity;
+use app\entities\ImageEntity;
 use yii\web\ServerErrorHttpException;
 use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;

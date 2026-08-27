@@ -6,10 +6,10 @@ use Yii;
 use yii\web\NotFoundHttpException;
 use yii\web\ServerErrorHttpException;
 use yii\web\UnprocessableEntityHttpException;
-use app\models\entities\CategoryEntity;
-use app\models\entities\ImageEntity;
-use app\models\dtos\request\CategoryRequestDto;
-use app\models\dtos\response\CategoryResponseDto;
+use app\entities\CategoryEntity;
+use app\entities\ImageEntity;
+use app\dtos\request\CategoryRequestDto;
+use app\dtos\response\CategoryResponseDto;
 
 /**
  * Категории (администратор)

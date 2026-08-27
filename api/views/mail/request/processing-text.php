@@ -1,5 +1,5 @@
 <?php
-/** @var \app\models\entities\CustomerRequestEntity $model */
+/** @var \app\entities\CustomerRequestEntity $model */
 $productTitle = $model->product ? $model->product->title : '—';
 $phone = \Yii::$app->params['supportPhone'] ?? '+7 (800) 000-00-00';
 ?>

@@ -1,10 +1,10 @@
 <?php
 
-namespace app\models\dtos\response;
+namespace app\dtos\response;
 
-use app\models\entities\UserEntity;
-use app\models\entities\RoleEntity;
-use app\models\entities\UserRoleEntity;
+use app\entities\UserEntity;
+use app\entities\RoleEntity;
+use app\entities\UserRoleEntity;
 
 /**
  * DTO ответа с данными пользователя.

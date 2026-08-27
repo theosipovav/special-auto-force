@@ -3,13 +3,13 @@
 namespace app\controllers\api;
 
 use Yii;
-use app\models\entities\ProductEntity;
-use app\models\entities\CustomerRequestEntity;
-use app\models\entities\ProductImageEntity;
-use app\models\dtos\response\ProductResponseDto;
-use app\models\dtos\response\ProductShortResponseDto;
-use app\models\dtos\response\ProductImageResponseDto;
-use app\models\dtos\response\CategoryResponseDto;
+use app\entities\ProductEntity;
+use app\entities\CustomerRequestEntity;
+use app\entities\ProductImageEntity;
+use app\dtos\response\ProductResponseDto;
+use app\dtos\response\ProductShortResponseDto;
+use app\dtos\response\ProductImageResponseDto;
+use app\dtos\response\CategoryResponseDto;
 use yii\web\NotFoundHttpException;
 
 /**

@@ -1,8 +1,8 @@
 <?php
 
-namespace app\models\dtos\response;
+namespace app\dtos\response;
 
-use app\models\entities\ProductEntity;
+use app\entities\ProductEntity;
 
 /**
  * DTO ответа с данными товара.

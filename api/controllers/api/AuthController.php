@@ -3,15 +3,15 @@
 
 namespace app\controllers\api;
 
-use app\models\dtos\response\SigninResponsDto;
+use app\dtos\response\SigninResponsDto;
 use Yii;
 use yii\rest\Controller;
 use yii\filters\Cors;
 use yii\filters\auth\HttpBearerAuth;
 use yii\web\Response;
-use app\models\dtos\request\LoginForm;
-use app\models\dtos\request\SignupForm;
-use app\models\entities\UserEntity;
+use app\dtos\request\LoginForm;
+use app\dtos\request\SignupForm;
+use app\entities\UserEntity;
 use yii\web\ServerErrorHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\UnprocessableEntityHttpException;

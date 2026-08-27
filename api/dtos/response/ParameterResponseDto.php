@@ -1,6 +1,6 @@
 <?php
 
-namespace app\models\entities;
+namespace app\entities;
 
 /**
  * DTO параметра сайта.

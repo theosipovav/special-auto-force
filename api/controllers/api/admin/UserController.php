@@ -7,10 +7,10 @@ use yii\data\ActiveDataProvider;
 use yii\web\NotFoundHttpException;
 use yii\web\UnprocessableEntityHttpException;
 use yii\web\ServerErrorHttpException;
-use app\models\entities\UserEntity;
-use app\models\entities\RoleEntity;
-use app\models\dtos\request\UserRequestDto;
-use app\models\dtos\request\PasswordSetRequestDto;
+use app\entities\UserEntity;
+use app\entities\RoleEntity;
+use app\dtos\request\UserRequestDto;
+use app\dtos\request\PasswordSetRequestDto;
 
 /**
  * Пользователи (администратор)

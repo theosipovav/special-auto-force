@@ -7,9 +7,9 @@ use yii\data\ActiveDataProvider;
 use yii\web\NotFoundHttpException;
 use yii\web\ServerErrorHttpException;
 use yii\web\UnprocessableEntityHttpException;
-use app\models\entities\CustomerRequestEntity;
-use app\models\entities\Product;
-use app\models\entities\Parameter;
+use app\entities\CustomerRequestEntity;
+use app\entities\Product;
+use app\entities\Parameter;
 
 /**
  * Заявки клиентов (администратор)

@@ -4,7 +4,7 @@ namespace app\controllers\api\admin;
 
 use Yii;
 use yii\data\ActiveDataProvider;
-use app\models\entities\RoleEntity;
+use app\entities\RoleEntity;
 
 /**
  * Роли пользователей (администратор)

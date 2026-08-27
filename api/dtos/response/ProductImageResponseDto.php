@@ -1,9 +1,9 @@
 <?php
 
-namespace app\models\dtos\response;
+namespace app\dtos\response;
 
 
-use app\models\entities\ProductImageEntity;
+use app\entities\ProductImageEntity;
 
 /**
  * DTO ответа с данными изображения товара.

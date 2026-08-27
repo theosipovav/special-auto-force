@@ -4,18 +4,18 @@ namespace app\controllers\api\admin;
 
 use Yii;
 use yii\data\ActiveDataProvider;
-use app\models\entities\ProductEntity;
-use app\models\entities\ProductCategoryEntity;
-use app\models\entities\ProductImageEntity;
-use app\models\entities\ImageEntity;
-use app\models\entities\CustomerRequestEntity;
-use app\models\dtos\request\CreateProductRequest;
-use app\models\dtos\request\UpdateProductRequest;
-use app\models\dtos\response\ProductResponseDto;
-use app\models\dtos\response\CategoryResponseDto;
-use app\models\dtos\response\ProductImageResponseDto;
+use app\entities\ProductEntity;
+use app\entities\ProductCategoryEntity;
+use app\entities\ProductImageEntity;
+use app\entities\ImageEntity;
+use app\entities\CustomerRequestEntity;
+use app\dtos\request\CreateProductRequest;
+use app\dtos\request\UpdateProductRequest;
+use app\dtos\response\ProductResponseDto;
+use app\dtos\response\CategoryResponseDto;
+use app\dtos\response\ProductImageResponseDto;
 use \yii\web\UnprocessableEntityHttpException;
-use app\models\dtos\request\FormFileImageDto;
+use app\dtos\request\FormFileImageDto;
 use yii\web\ServerErrorHttpException;
 
 /**

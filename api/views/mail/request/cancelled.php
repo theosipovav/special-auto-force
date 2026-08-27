@@ -2,7 +2,7 @@
 /**
  * Шаблон письма: Заявка отменена
  *
- * @var \app\models\entities\CustomerRequestEntity $model
+ * @var \app\entities\CustomerRequestEntity $model
  */
 
 $productTitle = $model->product ? $model->product->title : '—';

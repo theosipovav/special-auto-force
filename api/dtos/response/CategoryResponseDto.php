@@ -1,9 +1,9 @@
 <?php
 
-namespace app\models\dtos\response;
+namespace app\dtos\response;
 
-use app\models\entities\CategoryEntity;
-use app\models\entities\ImageEntity;
+use app\entities\CategoryEntity;
+use app\entities\ImageEntity;
 
 /**
  * DTO ответа с данными категории.

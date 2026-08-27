@@ -1,6 +1,6 @@
 <?php
 
-namespace app\models\dtos\response;
+namespace app\dtos\response;
 
 /**
  * Ответ авторизации пользователя.
