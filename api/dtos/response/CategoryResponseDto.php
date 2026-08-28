@@ -2,6 +2,7 @@
 
 namespace app\dtos\response;
 
+use Yii;
 use app\entities\CategoryEntity;
 use app\entities\ImageEntity;
 
@@ -29,12 +30,12 @@ class CategoryResponseDto
     public ?int $imageId;
     public int $productsCount = 10;
 
-    public function __construct(int $id, string $title, ?string $description = null, ?string $imageUrl = null, ?int $imageId = null, ?int $productsCount)
+    public function __construct(int $id, string $title, ?string $description = null, ?string $imageUrl, ?int $imageId, ?int $productsCount)
     {
         $this->id = $id;
         $this->title = $title;
         $this->description = $description;
-        $this->imageUrl = $imageUrl;
+        $this->imageUrl = $imageUrl ?? rtrim(Yii::getAlias('@web'), '/') . '/web/images/no_image.jpg';
         $this->imageId = $imageId;
         $this->productsCount = $productsCount ?? 0;
     }

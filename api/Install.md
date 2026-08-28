@@ -83,14 +83,28 @@ chown www-data:www-data web web/assets web/uploads web/uploads/images
 ```
 
 
-## Применение миграции
+## Создание миграции
 ```bash
-
+# Через консоль сервера 
+php yii migrate/create fill_table_parameter
+# Через docker
+docker exec -it reg-ru-php php ./api/yii migrate/create init
+docker exec -it reg-ru-php php ./api/yii migrate/create fill_tables
+docker exec -it reg-ru-php php ./api/yii migrate/create fill_table_parameter
 ```
 
+## Применение миграции
 ```bash
 # Через консоль сервера 
 php yii migrate
 # Через docker
 docker exec -it reg-ru-php php ./api/yii migrate
+```
+
+## Откатить последнюю применённую миграцию
+```bash
+# Через консоль сервера 
+php yii migrate/down 1
+# Через docker
+docker exec -it reg-ru-php php ./api/yii migrate/down 1
 ```

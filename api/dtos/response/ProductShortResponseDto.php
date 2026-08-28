@@ -2,6 +2,7 @@
 
 namespace app\dtos\response;
 
+use Yii;
 use app\entities\ProductEntity;
 
 /**
@@ -36,13 +37,13 @@ class ProductShortResponseDto
      * @param string $mainImageUrl Главное (основное) изображение продукции (url)
      * @param array $categories Категории (наименования)
      */
-    public function __construct(int $id, string $title, $article, ?float $price, int $in_stock, string $mainImageUrl, $categories) {
+    public function __construct(int $id, string $title, $article, ?float $price, int $in_stock, ?string $mainImageUrl, $categories) {
         $this->id = $id;
         $this->title = $title;
         $this->article = $article;
         $this->price = $price;
         $this->in_stock = $in_stock;
-        $this->mainImageUrl = $mainImageUrl;
+        $this->mainImageUrl = $mainImageUrl ?? rtrim(Yii::getAlias('@web'), '/') . '/web/images/no_image.jpg';
         $this->categories = $categories;
     }
 
@@ -87,7 +88,7 @@ class ProductShortResponseDto
             (string) $product->article,
             $product->price !== null ? (float) $product->price : null,
             (int) $product->in_stock,
-            $mainImageUrl ?? '',
+            $mainImageUrl,
             $categoryTitles
         );
     }

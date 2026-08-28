@@ -2,6 +2,7 @@
 
 namespace app\dtos\response;
 
+use Yii;
 use app\entities\ProductEntity;
 
 /**
@@ -60,22 +61,8 @@ class ProductResponseDto
      * @param array $images Все связанные изображения
      * @param array $categories Коллекция категорий товара
      */
-    public function __construct(
-        int $id,
-        string $title,
-        string $short_description,
-        string $long_description,
-        ?string $info,
-        ?string $article,
-        ?float $price,
-        int $in_stock,
-        ?string $manufacturer,
-        ?string $country,
-        string $created_at,
-        ?string $mainImageUrl,
-        array $otherImageUrls,
-        array $images,
-        array $categories
+    public function __construct(int $id, string $title, string $short_description, string $long_description, ?string $info, ?string $article, ?float $price, int $in_stock, 
+    ?string $manufacturer, ?string $country, string $created_at, ?string $mainImageUrl, array $otherImageUrls, array $images, array $categories
     ) {
         $this->id = $id;
         $this->title = $title;
@@ -88,7 +75,7 @@ class ProductResponseDto
         $this->manufacturer = $manufacturer;
         $this->country = $country;
         $this->created_at = $created_at;
-        $this->mainImageUrl = $mainImageUrl;
+        $this->mainImageUrl = $mainImageUrl ?? rtrim(Yii::getAlias('@web'), '/') . '/web/images/no_image.jpg';
         $this->otherImageUrls = $otherImageUrls;
         $this->images = $images;
         $this->categories = $categories;
@@ -152,7 +139,7 @@ class ProductResponseDto
             $product->manufacturer,
             $product->country,
             (string) $product->created_at,
-            $mainImageUrl,
+            $mainImageUrl ?? null,
             $otherImageUrls,
             $productImageDtos,
             $categoryDtos

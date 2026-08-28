@@ -1,2 +1,4 @@
 vendor/
 runtime/
+web/uploads/images/
+!web/uploads/images/readme.md
